@@ -40,10 +40,10 @@ def run_clean():
         print("ℹ️  Target folder was already empty.")
 
 # === STEP 1: Define folder structure and file names ===
-SRC_DIR = "../source"
-VERIF_DIR = "../verif"
+SRC_DIR = "source"
+VERIF_DIR = "verif"
 MACRO_DIR = f"{SRC_DIR}/common"
-TARGET_DIR = f"../target/{project}"
+TARGET_DIR = f"target/{project}"
 
 TOP_MODULE = f"{project}.sv"
 TB_MODULE = f"tb_{project}.sv"

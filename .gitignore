@@ -1,0 +1,28 @@
+# Ignore target directory (build artifacts)
+/target/
+
+# Ignore VCD files (simulation results)
+*.vcd
+
+# Ignore compiled output files
+*.out
+
+# Ignore logs
+*.log
+
+# Ignore temporary files
+*~
+*.tmp
+*.bak
+
+# Include only specific directories
+/*
+!/build/
+!/source/
+!/verif/
+!/README*
+!/.gitignore
+
+# Operating system files
+.DS_Store
+Thumbs.db

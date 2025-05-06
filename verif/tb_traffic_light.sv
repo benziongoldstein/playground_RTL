@@ -26,7 +26,7 @@ module tb_traffic_light;
 
     initial begin
         // Dump waveform
-        $dumpfile("traffic.vcd");
+        $dumpfile("target/traffic_light/traffic_light.vcd");
         $dumpvars(0, tb_traffic_light);
 
         // Hold reset
