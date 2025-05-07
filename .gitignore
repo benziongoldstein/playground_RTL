@@ -1,0 +1,23 @@
+# Simulation files
+*.vcd
+*.vvp
+*.sim
+*.log
+
+# Compiled files
+*.o
+*.out
+*.exe
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build directories
+sim/
+
+# Temporary files
+*.tmp
+*.bak 

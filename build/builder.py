@@ -2,7 +2,6 @@ import shutil
 import argparse
 import subprocess
 import os
-import glob
 import sys
 
 # === STEP 0: Get the project name from command-line arguments ===
@@ -14,7 +13,15 @@ if len(sys.argv) < 2:
 project = sys.argv[1]        # First argument: project name
 sys.argv.pop(1)              # Remove it so -hw/-sim/-gui work with argparse
 
-# === STEP 0.5: Clean target directory ===
+# === STEP 0.5: Define folders and file paths ===
+SRC_DIR = "../source"
+VERIF_DIR = "../verif"
+TARGET_DIR = f"../target/{project}"
+F_FILE = f"{VERIF_DIR}/{project}/{project}_list.f"
+OUT_EXEC = f"{project}.out"
+VCD_FILE = f"{project}.vcd"
+
+# === STEP 1: Clean target directory ===
 def run_clean():
     print(f"\n🧹 Cleaning build files for: {project}")
     if not os.path.exists(TARGET_DIR):
@@ -39,52 +46,25 @@ def run_clean():
     if not removed_any:
         print("ℹ️  Target folder was already empty.")
 
-# === STEP 1: Define folder structure and file names ===
-SRC_DIR = "../source"
-VERIF_DIR = "../verif"
-MACRO_DIR = f"{SRC_DIR}/common"
-TARGET_DIR = f"../target/{project}"
-
-TOP_MODULE = f"{project}.sv"
-TB_MODULE = f"tb_{project}.sv"
-OUT_EXEC = f"{project}.out"
-VCD_FILE = f"{project}.vcd"
-
-
-# === STEP 2: Check if required source and testbench files exist ===
-def check_required_files():
-    missing = []
-    top_path = f"{SRC_DIR}/{TOP_MODULE}"
-    tb_path = f"{VERIF_DIR}/{TB_MODULE}"
-
-    if not os.path.exists(top_path):
-        missing.append(top_path)
-    if not os.path.exists(tb_path):
-        missing.append(tb_path)
-
-    if missing:
-        print("❌ Missing required file(s):")
-        for m in missing:
-            print(f"   - {m}")
-        sys.exit(1)
-
-# === STEP 3: Compile the SystemVerilog design + testbench + macros ===
+# === STEP 2: Compile using file list ===
 def run_hw():
     print(f"\n🛠️  Compiling project: {project}")
-    print(f"🔍 Top: {TOP_MODULE}, Testbench: {TB_MODULE}")
+    print(f"🔍 Using file list: {F_FILE}")
     os.makedirs(TARGET_DIR, exist_ok=True)
-    check_required_files()
 
-    macro_files = glob.glob(f"{MACRO_DIR}/*.sv")
+    if not os.path.exists(F_FILE):
+        print(f"❌ Missing file list: {F_FILE}")
+        sys.exit(1)
 
     compile_cmd = [
         "iverilog",
         "-g2012",
-        "-I", MACRO_DIR,  # 🔥 THIS LINE tells iverilog where to find includes
+        "-I", "../source/common",
         "-o", f"{TARGET_DIR}/{OUT_EXEC}",
-        f"{SRC_DIR}/{TOP_MODULE}",
-        f"{VERIF_DIR}/{TB_MODULE}",
-    ] + macro_files
+        "-f", F_FILE
+    ]
+
+    print("Compile command:", " ".join(compile_cmd))  # Optional: for debugging
 
     try:
         subprocess.run(compile_cmd, check=True)
@@ -93,14 +73,12 @@ def run_hw():
         print("❌ Compilation failed")
         sys.exit(1)
 
-
-# === STEP 4: Run simulation and back up existing wave.vcd ===
+# === STEP 3: Run simulation ===
 def run_sim():
     print("\n🚀 Running simulation...")
     vcd_path = f"{TARGET_DIR}/{VCD_FILE}"
     prev_vcd_path = vcd_path.replace(".vcd", "_prev.vcd")
 
-    # Backup existing VCD if it exists
     if os.path.exists(vcd_path):
         os.rename(vcd_path, prev_vcd_path)
         print(f"📦 Backed up previous VCD to: {prev_vcd_path}")
@@ -114,7 +92,7 @@ def run_sim():
         print("❌ Simulation failed")
         sys.exit(1)
 
-# === STEP 5: Launch GTKWave ===
+# === STEP 4: Launch GTKWave ===
 def run_gui():
     print("\n🖥️ Launching GTKWave...")
     vcd_path = f"{TARGET_DIR}/{VCD_FILE}"
@@ -125,7 +103,7 @@ def run_gui():
 
     subprocess.run(["gtkwave", vcd_path])
 
-# === STEP 6: CLI handling ===
+# === STEP 5: CLI Handling ===
 def main():
     parser = argparse.ArgumentParser(description="SystemVerilog Builder for any project")
     parser.add_argument("-clean", action="store_true", help="Delete all generated files for the project")
@@ -137,20 +115,16 @@ def main():
     args = parser.parse_args()
 
     if args.clean:
-         run_clean()
-    # Optional: exit after cleaning, or continue if combined with -hw/-sim/-gui
-    if not (args.hw or args.sim or args.gui or args.all):
-        return
+        run_clean()
+        if not (args.hw or args.sim or args.gui or args.all):
+            return
 
-   
-    # Handle -all (runs everything in correct order)
     if args.all:
         run_hw()
         run_sim()
         run_gui()
         return
 
-    # Enforce flag dependencies
     if args.gui and (not args.hw or not args.sim):
         print("❌ GTKWave (-gui) requires both -hw and -sim")
         sys.exit(1)
@@ -159,7 +133,6 @@ def main():
         print("❌ Simulation (-sim) requires -hw (compile) first")
         sys.exit(1)
 
-    # Execute steps in correct order
     if args.hw:
         run_hw()
         if args.sim:
@@ -167,7 +140,6 @@ def main():
         if args.gui:
             run_gui()
 
-    # If no flags passed
     if not (args.hw or args.sim or args.gui or args.all):
         print("ℹ️ Use -hw, -sim, -gui, or -all to run a build step")
 
