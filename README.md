@@ -11,8 +11,8 @@ A parameterized traffic light controller implemented in SystemVerilog. This proj
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/username/playground_RTL.git
+   cd playground_RTL
    ```
 2. **Install dependencies:**
    - [Icarus Verilog](http://iverilog.icarus.com/) (for simulation)
@@ -53,11 +53,11 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 
 #### License
 
-This project is open source. [Add your license here, e.g., MIT, Apache 2.0, etc.]
+This project is open source and free to use for any purpose. Feel free to modify, distribute, and use it as you wish.
 
 #### Contact Information
 
-For questions or support, please contact the maintainer at [your-email@example.com].
+For questions or support, please contact the maintainer at benziong@mail.tau.ac.il.
 
 ---
 
