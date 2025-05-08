@@ -7,4 +7,11 @@
         else     Q <= D; \
     end
 
+`define DFF_1(state, next_state, CLK) \
+    always_ff @(posedge CLK) begin \
+        for(int i=0; i<32; i++) begin \
+            state[i] <= next_state[i]; \
+        end \
+    end
+
 `endif
