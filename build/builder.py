@@ -72,36 +72,13 @@ def run_hw():
         print(f"❌ Missing file list: {F_FILE}")
         sys.exit(1)
 
-    # Parse file list for +incdir+ and source files
-    incdirs = []
-    srcfiles = []
-    with open(F_FILE, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            if line.startswith('+incdir+'):
-                # Make incdir absolute if not already
-                incdir = line[len('+incdir+'):]
-                if not os.path.isabs(incdir):
-                    incdir = os.path.join(MODEL_ROOT, incdir)
-                incdirs.append(incdir)
-            else:
-                # Make file path absolute if not already
-                src = line
-                if not os.path.isabs(src):
-                    src = os.path.join(MODEL_ROOT, src)
-                srcfiles.append(src)
-
+    # Use the -f flag to directly include the file list instead of parsing it manually
     compile_cmd = [
         "iverilog",
         "-g2012",
+        "-f", F_FILE,
+        "-o", os.path.join(TARGET_DIR, OUT_EXEC)
     ]
-    for incdir in incdirs:
-        compile_cmd += ["-I", incdir]
-    compile_cmd += ["-o", os.path.join(TARGET_DIR, OUT_EXEC)]
-    for src in srcfiles:
-        compile_cmd.append(src)
 
     print("Compile command:", " ".join(compile_cmd))  # Optional: for debugging
 
