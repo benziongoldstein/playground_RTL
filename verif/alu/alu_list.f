@@ -1,7 +1,9 @@
 # File list for ALU simulation
-+incdir+../source/common
-# ALU module
-../source/alu/alu.sv
-# Testbench for ALU
-../verif/alu/tb_alu.sv
+# Include directories
++incdir+source/common
++incdir+source/alu
+
+# Source files
+source/alu/alu.sv
+verif/alu/tb_alu.sv
 

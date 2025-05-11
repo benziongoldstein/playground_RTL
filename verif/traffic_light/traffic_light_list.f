@@ -1,7 +1,9 @@
 # File list for traffic_light simulation
-+incdir+../source/common
-# Traffic light module
-../source/traffic_light/traffic_light.sv
-# Testbench for traffic light
-../verif/traffic_light/tb_traffic_light.sv
+# Include directories
++incdir+source/common
++incdir+source/traffic_light
+
+# Source files
+source/traffic_light/traffic_light.sv
+verif/traffic_light/tb_traffic_light.sv
 

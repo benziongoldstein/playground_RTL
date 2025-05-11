@@ -1,6 +1,8 @@
 # File list for RF simulation
-+incdir+../source/common
-# Register file module
-../source/rf/rf.sv
-# Testbench for register file
-../verif/rf/tb_rf.sv
+# Include directories
++incdir+source/common
++incdir+source/rf
+
+# Source files
+source/rf/rf.sv
+verif/rf/tb_rf.sv

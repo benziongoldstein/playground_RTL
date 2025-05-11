@@ -4,24 +4,40 @@ import subprocess
 import os
 import sys
 
-# === STEP 0: Get the project name from command-line arguments ===
+# === STEP 0: Find MODEL_ROOT (project root) ===
+def find_model_root():
+    # Use environment variable if set
+    env_root = os.environ.get('MODEL_ROOT')
+    if env_root:
+        return os.path.abspath(env_root)
+    # Otherwise, walk up from current directory to find 'build' directory
+    cur = os.path.abspath(os.getcwd())
+    while cur != '/':
+        if os.path.isdir(os.path.join(cur, 'build')):
+            return cur
+        cur = os.path.dirname(cur)
+    raise RuntimeError("MODEL_ROOT not found (no 'build' directory in any parent)")
+
+MODEL_ROOT = find_model_root()
+
+# === STEP 0.5: Get the project name from command-line arguments ===
 if len(sys.argv) < 2:
     print("❌ Please specify the project name. Example:")
-    print("   python builder.py my_project -all")
+    print("   python build/builder.py my_project -all")
     sys.exit(1)
 
 project = sys.argv[1]        # First argument: project name
 sys.argv.pop(1)              # Remove it so -hw/-sim/-gui work with argparse
 
-# === STEP 0.5: Define folders and file paths ===
-SRC_DIR = "../source"
-VERIF_DIR = "../verif"
-TARGET_DIR = f"../target/{project}"
-F_FILE = f"{VERIF_DIR}/{project}/{project}_list.f"
+# === STEP 1: Define folders and file paths relative to MODEL_ROOT ===
+SRC_DIR = os.path.join(MODEL_ROOT, "source")
+VERIF_DIR = os.path.join(MODEL_ROOT, "verif")
+TARGET_DIR = os.path.join(MODEL_ROOT, "target", project)
+F_FILE = os.path.join(VERIF_DIR, project, f"{project}_list.f")
 OUT_EXEC = f"{project}.out"
 VCD_FILE = f"{project}.vcd"
 
-# === STEP 1: Clean target directory ===
+# === STEP 2: Clean target directory ===
 def run_clean():
     print(f"\n🧹 Cleaning build files for: {project}")
     if not os.path.exists(TARGET_DIR):
@@ -46,7 +62,7 @@ def run_clean():
     if not removed_any:
         print("ℹ️  Target folder was already empty.")
 
-# === STEP 2: Compile using file list ===
+# === STEP 3: Compile using file list ===
 def run_hw():
     print(f"\n🛠️  Compiling project: {project}")
     print(f"🔍 Using file list: {F_FILE}")
@@ -65,9 +81,17 @@ def run_hw():
             if not line or line.startswith('#'):
                 continue
             if line.startswith('+incdir+'):
-                incdirs.append(line[len('+incdir+'):])
+                # Make incdir absolute if not already
+                incdir = line[len('+incdir+'):]
+                if not os.path.isabs(incdir):
+                    incdir = os.path.join(MODEL_ROOT, incdir)
+                incdirs.append(incdir)
             else:
-                srcfiles.append(line)
+                # Make file path absolute if not already
+                src = line
+                if not os.path.isabs(src):
+                    src = os.path.join(MODEL_ROOT, src)
+                srcfiles.append(src)
 
     compile_cmd = [
         "iverilog",
@@ -75,7 +99,7 @@ def run_hw():
     ]
     for incdir in incdirs:
         compile_cmd += ["-I", incdir]
-    compile_cmd += ["-o", f"{TARGET_DIR}/{OUT_EXEC}"]
+    compile_cmd += ["-o", os.path.join(TARGET_DIR, OUT_EXEC)]
     for src in srcfiles:
         compile_cmd.append(src)
 
@@ -88,17 +112,17 @@ def run_hw():
         print("❌ Compilation failed")
         sys.exit(1)
 
-# === STEP 3: Run simulation ===
+# === STEP 4: Run simulation ===
 def run_sim():
     print("\n🚀 Running simulation...")
-    vcd_path = f"{TARGET_DIR}/{VCD_FILE}"
+    vcd_path = os.path.join(TARGET_DIR, VCD_FILE)
     prev_vcd_path = vcd_path.replace(".vcd", "_prev.vcd")
 
     if os.path.exists(vcd_path):
         os.rename(vcd_path, prev_vcd_path)
         print(f"📦 Backed up previous VCD to: {prev_vcd_path}")
 
-    sim_cmd = ["vvp", f"{TARGET_DIR}/{OUT_EXEC}"]
+    sim_cmd = ["vvp", os.path.join(TARGET_DIR, OUT_EXEC)]
 
     try:
         subprocess.run(sim_cmd, check=True)
@@ -107,10 +131,10 @@ def run_sim():
         print("❌ Simulation failed")
         sys.exit(1)
 
-# === STEP 4: Launch GTKWave ===
+# === STEP 5: Launch GTKWave ===
 def run_gui():
     print("\n🖥️ Launching GTKWave...")
-    vcd_path = f"{TARGET_DIR}/{VCD_FILE}"
+    vcd_path = os.path.join(TARGET_DIR, VCD_FILE)
 
     if not os.path.exists(vcd_path):
         print(f"❌ VCD file not found: {vcd_path}")
@@ -118,7 +142,7 @@ def run_gui():
 
     subprocess.run(["gtkwave", vcd_path])
 
-# === STEP 5: CLI Handling ===
+# === STEP 6: CLI Handling ===
 def main():
     parser = argparse.ArgumentParser(description="SystemVerilog Builder for any project")
     parser.add_argument("-clean", action="store_true", help="Delete all generated files for the project")

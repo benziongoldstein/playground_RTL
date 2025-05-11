@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module RF_tb;
+module rf_tb;
 
     /* DUT signals */
     logic         clk = 0;
@@ -26,7 +26,7 @@ module RF_tb;
 
     initial begin
         $dumpfile("../target/rf/rf.vcd");
-        $dumpvars(0, RF_tb);
+        $dumpvars(0, rf_tb);
 
         /* ---------- reset values ---------- */
         {reg_s1, reg_s2, rd} = '0;
