@@ -20,4 +20,7 @@ sim/
 
 # Temporary files
 *.tmp
-*.bak 
+*.bak
+
+# Ignore the KP directory and all its contents
+source/KP/ 
