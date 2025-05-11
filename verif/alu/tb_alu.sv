@@ -19,7 +19,9 @@ module alu_tb;
     );
 
     initial begin
-        $dumpfile("../target/alu/alu.vcd");
+        string vcd_path;
+        if (!$value$plusargs("VCD=%s", vcd_path)) vcd_path = "target/alu/alu.vcd";
+        $dumpfile(vcd_path);
         $dumpvars(0, alu_tb);
         $display("=== ALU Testbench Start ===");
         

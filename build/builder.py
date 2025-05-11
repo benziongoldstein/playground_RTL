@@ -9,14 +9,24 @@ def find_model_root():
     # Use environment variable if set
     env_root = os.environ.get('MODEL_ROOT')
     if env_root:
+        print(f"[DEBUG] Using MODEL_ROOT from environment: {env_root}")
         return os.path.abspath(env_root)
+    # Try git rev-parse
+    try:
+        git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], stderr=subprocess.DEVNULL).decode().strip()
+        if git_root:
+            print(f"[DEBUG] Using MODEL_ROOT from git: {git_root}")
+            return os.path.abspath(git_root)
+    except Exception:
+        pass
     # Otherwise, walk up from current directory to find 'build' directory
     cur = os.path.abspath(os.getcwd())
     while cur != '/':
         if os.path.isdir(os.path.join(cur, 'build')):
+            print(f"[DEBUG] Using MODEL_ROOT by directory walk: {cur}")
             return cur
         cur = os.path.dirname(cur)
-    raise RuntimeError("MODEL_ROOT not found (no 'build' directory in any parent)")
+    raise RuntimeError("MODEL_ROOT not found (no 'build' directory in any parent, and not a git repo)")
 
 MODEL_ROOT = find_model_root()
 
@@ -36,6 +46,9 @@ TARGET_DIR = os.path.join(MODEL_ROOT, "target", project)
 F_FILE = os.path.join(VERIF_DIR, project, f"{project}_list.f")
 OUT_EXEC = f"{project}.out"
 VCD_FILE = f"{project}.vcd"
+
+print(f"[DEBUG] MODEL_ROOT: {MODEL_ROOT}")
+print(f"[DEBUG] File list: {F_FILE}")
 
 # === STEP 2: Clean target directory ===
 def run_clean():
@@ -122,7 +135,7 @@ def run_sim():
         os.rename(vcd_path, prev_vcd_path)
         print(f"📦 Backed up previous VCD to: {prev_vcd_path}")
 
-    sim_cmd = ["vvp", os.path.join(TARGET_DIR, OUT_EXEC)]
+    sim_cmd = ["vvp", os.path.join(TARGET_DIR, OUT_EXEC), f"+VCD={vcd_path}"]
 
     try:
         subprocess.run(sim_cmd, check=True)

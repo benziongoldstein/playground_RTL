@@ -1,4 +1,4 @@
 #!/bin/bash
-# Set MODEL_ROOT to the directory containing this script's parent (the project root)
-export MODEL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Source this script to set MODEL_ROOT to the root of your git repo
+export MODEL_ROOT=$(git rev-parse --show-toplevel)
 echo "MODEL_ROOT set to $MODEL_ROOT" 

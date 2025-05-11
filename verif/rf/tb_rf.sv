@@ -25,7 +25,9 @@ module rf_tb;
     always #5 clk = ~clk;
 
     initial begin
-        $dumpfile("../target/rf/rf.vcd");
+        string vcd_path;
+        if (!$value$plusargs("VCD=%s", vcd_path)) vcd_path = "target/rf/rf.vcd";
+        $dumpfile(vcd_path);
         $dumpvars(0, rf_tb);
 
         /* ---------- reset values ---------- */

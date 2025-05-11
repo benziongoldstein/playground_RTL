@@ -25,8 +25,9 @@ module tb_traffic_light;
     );
 
     initial begin
-        // Dump waveform
-        $dumpfile("../target/traffic_light/traffic_light.vcd");
+        string vcd_path;
+        if (!$value$plusargs("VCD=%s", vcd_path)) vcd_path = "target/traffic_light/traffic_light.vcd";
+        $dumpfile(vcd_path);
         $dumpvars(0, tb_traffic_light);
 
         // Hold reset
