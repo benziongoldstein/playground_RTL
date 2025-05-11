@@ -6,19 +6,25 @@ import sys
 
 # === STEP 0: Find MODEL_ROOT (project root) ===
 def find_model_root():
-    # Use environment variable if set
-    env_root = os.environ.get('MODEL_ROOT')
-    if env_root:
-        return os.path.abspath(env_root)
-    # Otherwise, walk up from current directory to find 'build' directory
-    cur = os.path.abspath(os.getcwd())
-    while cur != '/':
-        if os.path.isdir(os.path.join(cur, 'build')):
-            return cur
-        cur = os.path.dirname(cur)
-    raise RuntimeError("MODEL_ROOT not found (no 'build' directory in any parent)")
+    print("[DEBUG] Attempting to source source_me.sh to get MODEL_ROOT...")
+    try:
+        result = subprocess.check_output(
+            ['bash', '-c', 'source source_me.sh >/dev/null 2>&1 && echo $MODEL_ROOT'],
+            cwd=os.path.dirname(__file__)
+        )
+        model_root = result.decode('utf-8').strip()
+        print(f"[DEBUG] MODEL_ROOT from source_me.sh: '{model_root}'")
+        return model_root
+    except Exception as e:
+        print(f"[DEBUG] Exception while sourcing source_me.sh: {e}")
+        raise RuntimeError("MODEL_ROOT could not be determined by sourcing source_me.sh")
 
-MODEL_ROOT = find_model_root()
+try:
+    MODEL_ROOT = find_model_root()
+    print(f"[DEBUG] MODEL_ROOT set to: {MODEL_ROOT}")
+except Exception as e:
+    print(f"[DEBUG] Fatal error: {e}")
+    sys.exit(1)
 
 # === STEP 0.5: Get the project name from command-line arguments ===
 if len(sys.argv) < 2:

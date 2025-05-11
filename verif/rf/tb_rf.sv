@@ -25,7 +25,7 @@ module rf_tb;
     always #5 clk = ~clk;
 
     initial begin
-        $dumpfile("../target/rf/rf.vcd");
+        $dumpfile("target/rf/rf.vcd");
         $dumpvars(0, rf_tb);
 
         /* ---------- reset values ---------- */
