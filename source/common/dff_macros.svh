@@ -1,5 +1,5 @@
-`ifndef DFF_MACROS_SV
-`define DFF_MACROS_SV
+`ifndef DFF_MACROS_SVH
+`define DFF_MACROS_SVH
 
 
 `define DFF(Q, D, CLK, RST, RESET_VAL) \

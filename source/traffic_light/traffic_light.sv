@@ -1,4 +1,4 @@
-`include "dff_macros.sv"
+`include "dff_macros.svh"
 // Traffic Light Controller
 module traffic_light #(
     parameter int RED_T     = 20,

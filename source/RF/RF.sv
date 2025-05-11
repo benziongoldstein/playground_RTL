@@ -1,4 +1,4 @@
-`include "dff_macros.sv"
+`include "dff_macros.svh"
 module RF(
 input logic         clk,
 input logic [4:0]  reg_s1,
