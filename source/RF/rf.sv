@@ -1,5 +1,5 @@
 `include "dff_macros.svh"
-module RF(
+module rf(
 input logic         clk,
 input logic [4:0]  reg_s1,
 input logic [4:0]  reg_s2,

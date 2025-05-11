@@ -10,7 +10,7 @@ module RF_tb;
     logic [31:0]  reg_d1, reg_d2;
 
     /* Instantiate Register-File */
-    RF uut (
+    rf uut (
         .clk     (clk),
         .reg_s1  (reg_s1),
         .reg_s2  (reg_s2),
@@ -25,7 +25,7 @@ module RF_tb;
     always #5 clk = ~clk;
 
     initial begin
-        $dumpfile("../target/RF/RF.vcd");
+        $dumpfile("../target/rf/rf.vcd");
         $dumpvars(0, RF_tb);
 
         /* ---------- reset values ---------- */
