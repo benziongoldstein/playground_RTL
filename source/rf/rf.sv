@@ -12,7 +12,6 @@ output logic [31:0] reg_d2
 );
 
 logic [31:0] reg_file  [31:0];
-logic [31:0] next_reg_file  [31:0];
 
 `DFF_EN(reg_file[rd], write_d, clk, write_e)
 
