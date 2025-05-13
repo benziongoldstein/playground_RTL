@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml
       
+      # This is where the build starts
       - name: Build traffic_light IP
         run: python3 build/builder.py traffic_light -hw -sim
       
