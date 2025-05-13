@@ -2,7 +2,7 @@
 
 This repository is my personal RTL (Register Transfer Level) playground for experimenting with digital design using Verilog and SystemVerilog. Here, I will add various projects as I explore and learn more about hardware design.
 
-## Projects
+## Projects - simple
 
 ### 1. Traffic Light Controller
 A parameterized traffic light controller implemented in SystemVerilog. This project demonstrates a simple finite state machine (FSM) for controlling traffic lights, including a testbench for simulation.
