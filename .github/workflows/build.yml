@@ -25,14 +25,14 @@ jobs:
           python -m pip install pyyaml
       
       - name: Build traffic_light IP
-        run: python3 builder.py traffic_light -hw -sim
+        run: python3 build/builder.py traffic_light -hw -sim
       
       - name: Build rf IP (Register File)
-        run: python3 builder.py rf -hw -sim
+        run: python3 build/builder.py rf -hw -sim
       
       - name: Build pc IP (Program Counter)
-        run: python3 builder.py pc -hw -sim
+        run: python3 build/builder.py pc -hw -sim
       
       - name: Build alu IP
-        run: python3 builder.py alu -hw -sim
+        run: python3 build/builder.py alu -hw -sim
       
