@@ -1,0 +1,30 @@
+name: RTL_Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y iverilog gtkwave
+      
+      - name: Build traffic_light IP
+        run: python3 builder.py traffic_light -hw -sim
+      
+      - name: Build rf IP (Register File)
+        run: python3 builder.py rf -hw -sim
+      
+      - name: Build pc IP (Program Counter)
+        run: python3 builder.py pc -hw -sim
+      
+      - name: Build alu IP
+        run: python3 builder.py alu -hw -sim
+      
