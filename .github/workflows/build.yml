@@ -1,0 +1,38 @@
+name: RTL_Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y iverilog gtkwave
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml
+      
+      - name: Build traffic_light IP
+        run: python3 builder.py traffic_light -hw -sim
+      
+      - name: Build rf IP (Register File)
+        run: python3 builder.py rf -hw -sim
+      
+      - name: Build pc IP (Program Counter)
+        run: python3 builder.py pc -hw -sim
+      
+      - name: Build alu IP
+        run: python3 builder.py alu -hw -sim
+      
