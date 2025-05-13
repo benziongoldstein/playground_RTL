@@ -7,12 +7,27 @@ This repository is my personal RTL (Register Transfer Level) playground for expe
 ### 1. Traffic Light Controller
 A parameterized traffic light controller implemented in SystemVerilog. This project demonstrates a simple finite state machine (FSM) for controlling traffic lights, including a testbench for simulation.
 
+### 2. Program Counter (PC)
+A parameterized program counter module for CPU design, supporting synchronous operations and configurable bit width.
+
+### 3. Register File (RF)
+A parameterized register file implementation with configurable width and depth, supporting synchronous write and asynchronous read operations.
+
+### 4. Arithmetic Logic Unit (ALU)
+A parameterized ALU implementation supporting various arithmetic and logical operations, with configurable data width.
+
+### 5. Common Components
+A collection of reusable digital design components including:
+- D Flip-Flop with synchronous reset
+- Parameterized multiplexers
+- Other common digital building blocks
+
 #### Installation Instructions
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/username/playground_RTL.git
-   cd playground_RTL
+   git clone https://github.com/benziongoldstein/verilog_projects.git
+   cd verilog_projects
    ```
 2. **Install dependencies:**
    - [Icarus Verilog](http://iverilog.icarus.com/) (for simulation)
@@ -20,32 +35,47 @@ A parameterized traffic light controller implemented in SystemVerilog. This proj
 
 3. **Build and simulate using the builder script (recommended):**
    ```bash
-   cd build
-   python3 builder.py traffic_light -all
+   python3 build/builder.py <project_name> -all
    ```
-   - This will compile, simulate, and open GTKWave for the traffic light project.
+   Replace `<project_name>` with any of the project names (e.g., `traffic_light`, `pc`, `rf`, `alu`).
+   - This will compile, simulate, and open GTKWave for the selected project.
    - You can also use `-hw` (compile only), `-sim` (simulate), or `-gui` (view waveforms) as needed.
 
 4. **Manual compile (if you prefer):**
    ```bash
-   iverilog -g2012 -I source/common -f verif/traffic_light/traffic_light_list.f
+   iverilog -g2012 -I source/common -f verif/<project_name>/<project_name>_list.f
    vvp a.out
-   gtkwave traffic.vcd
+   gtkwave <project_name>.vcd
    ```
-   - The file list `verif/traffic_light/traffic_light_list.f` contains the required source and testbench files.
+   - Each project has its own file list in `verif/<project_name>/<project_name>_list.f` containing the required source and testbench files.
 
-#### Usage Guidelines
+#### Project-Specific Features
 
-- Modify the timing parameters in the testbench or module instantiation to simulate different traffic light durations.
-- Use the provided testbench (`verif/traffic_light/tb_traffic_light.sv`) to verify the design.
-- View the output signals (`red`, `yellow`, `green`) in GTKWave for analysis.
+##### Traffic Light Controller
+- Parameterized state durations for RED, RED+YELLOW, GREEN, and YELLOW
+- Synchronous reset
+- Macro-based D flip-flop instantiation
+- Comprehensive testbench for simulation
 
-#### Features
+##### Program Counter (PC)
+- Parameterized bit width
+- Synchronous operations
+- Optional enable and reset functionality
+- Testbench with various test scenarios
 
-- Parameterized state durations for RED, RED+YELLOW, GREEN, and YELLOW.
-- Synchronous reset.
-- Macro-based D flip-flop instantiation for clean code.
-- Comprehensive testbench for simulation.
+##### Register File (RF)
+- Configurable data width and number of registers
+- Synchronous write with write enable
+- Asynchronous read
+- Dual-port read capability
+- Testbench with read/write verification
+
+##### ALU
+- Parameterized data width
+- Multiple arithmetic operations (ADD, SUB, etc.)
+- Logical operations (AND, OR, XOR, etc.)
+- Status flags (Zero, Carry, Overflow)
+- Comprehensive testbench
 
 #### Contributing
 
