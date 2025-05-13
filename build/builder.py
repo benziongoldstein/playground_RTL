@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import shutil
 import argparse
 import subprocess
@@ -49,6 +50,17 @@ VCD_FILE = f"{project}.vcd"
 
 print(f"[DEBUG] MODEL_ROOT: {MODEL_ROOT}")
 print(f"[DEBUG] File list: {F_FILE}")
+
+# Check if the IP exists
+def check_ip_exists(ip_name):
+    verif_ip_dir = os.path.join(VERIF_DIR, ip_name)
+    if not os.path.exists(verif_ip_dir):
+        print(f"❌ No IP called {ip_name}")
+        sys.exit(1)
+    return True
+
+# Validate that the IP exists
+check_ip_exists(project)
 
 # === STEP 2: Clean target directory ===
 def run_clean():
