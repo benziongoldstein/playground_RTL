@@ -12,9 +12,9 @@ module pc(
 
     logic [31:0] next_pc;
 
-    // Compute pc_plus4 = pc_out + 1 (instruction indexing)
+    // Compute pc_plus4 = pc_out + 4 (instruction indexing)
     always_comb begin
-        pc_plus4 = pc_out + 31'd1;
+        pc_plus4 = pc_out + 31'd4;
     end
 
     // Mux to choose between pc_plus4 and alu_out

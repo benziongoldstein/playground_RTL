@@ -15,7 +15,7 @@ logic [31:0] reg_file  [31:0];
 
 `DFF_EN(reg_file[rd], write_d, clk, write_e)
 
-assign reg_data1 = reg_file[rs1];
-assign reg_data2 = reg_file[rs2];
+assign reg_data1 = (rs1 == 5'b0) ? 32'b0 : reg_file[rs1];
+assign reg_data2 = (rs2 == 5'b0) ? 32'b0 : reg_file[rs2];
 
 endmodule

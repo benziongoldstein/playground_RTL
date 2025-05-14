@@ -10,12 +10,14 @@ module mem(
     input logic [31:0] wr_data
 );
 
-logic [7:0]  [127:0] mem;
-logic [7:0]  [127:0] next_mem;
+logic [7:0] mem [127:0];
+logic [7:0] next_mem [127:0];
 
 
 always_comb begin
-    next_mem = mem;
+    for (int i = 0; i < 128; i++) begin
+        next_mem[i] = mem[i];
+    end
     if (wr_en) begin
         next_mem[adrs_wr+0] = byt_en[0] ? wr_data[7:0]   : mem[adrs_wr+0];
         next_mem[adrs_wr+1] = byt_en[1] ? wr_data[15:8]  : mem[adrs_wr+1];
@@ -30,6 +32,12 @@ assign rd_data = {mem[adrs_rd+3],
                   mem[adrs_rd+1], 
                   mem[adrs_rd+0]};
 
-`DFF(mem, next_mem, clk);
+//`DFF(mem, next_mem, clk);
+
+always_ff @(posedge clk) begin
+    for (int i = 0; i < 128; i++) begin
+        mem[i] <= next_mem[i];
+    end
+end
 
 endmodule
