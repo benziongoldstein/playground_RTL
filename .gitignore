@@ -16,7 +16,7 @@
 *~
 
 # Build directories
-sim/
+target/
 
 # Temporary files
 *.tmp
