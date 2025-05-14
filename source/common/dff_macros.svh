@@ -2,15 +2,31 @@
 `define DFF_MACROS_SVH
 
 
-`define DFF(Q, D, CLK, RST, RESET_VAL) \
+`define DFF(Q, D, CLK) \
+    always_ff @(posedge CLK) begin \
+        else     Q <= D; \
+    end
+
+
+`define DFF_RST(Q, D, CLK, RST) \
+    always_ff @(posedge CLK or posedge RST) begin \
+        if (RST) Q <= '0; \
+        else     Q <= D; \
+    end
+
+
+
+`define DFF_RST_VAL(Q, D, CLK, RST, RESET_VAL) \
     always_ff @(posedge CLK or posedge RST) begin \
         if (RST) Q <= RESET_VAL; \
         else     Q <= D; \
     end
-
 `define DFF_EN(q, in, clk, en) \
     always_ff @(posedge clk) begin \
         if (en) q <= in; \
     end
+
+
+
 
 `endif
