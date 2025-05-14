@@ -23,8 +23,8 @@ module traffic_light #(
     logic [4:0] timer, next_timer;
 
     // Instantiate flip-flops using dff macro
-    `DFF(state, next_state, clk, rst, S_RED)
-    `DFF(timer, next_timer, clk, rst, RED_T-1)
+    `DFF_RST_VAL(state, next_state, clk, rst, S_RED)
+    `DFF_RST_VAL(timer, next_timer, clk, rst, RED_T-1)
 
     // Next-state logic
     always_comb begin
