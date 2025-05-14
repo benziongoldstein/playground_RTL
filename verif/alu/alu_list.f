@@ -4,7 +4,6 @@
 +incdir+source/alu
 
 # Source files
-source/common/cpu_pkg.sv
 source/alu/alu.sv
 verif/alu/tb_alu.sv
 
