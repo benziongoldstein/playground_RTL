@@ -1,5 +1,8 @@
 # RTL Playground
 
+<!-- GitHub Actions Workflow Status -->
+![RTL_Build](https://github.com/benziongoldstein/playground_RTL/actions/workflows/build.yml/badge.svg?branch=master)
+
 This repository is my personal RTL (Register Transfer Level) playground for experimenting with digital design using Verilog and SystemVerilog. Here, I will add various projects as I explore and learn more about hardware design.
 
 ## Projects 
@@ -91,4 +94,4 @@ For questions or support, please contact the maintainer at benziong@mail.tau.ac.
 
 ---
 
-*More projects will be added as this playground grows!* 
+*More projects will be added as this playground grows!*
