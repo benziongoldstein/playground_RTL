@@ -4,7 +4,7 @@
 
 `define DFF(Q, D, CLK) \
     always_ff @(posedge CLK) begin \
-        else     Q <= D; \
+        Q <= D; \
     end
 
 
@@ -21,9 +21,19 @@
         if (RST) Q <= RESET_VAL; \
         else     Q <= D; \
     end
+
+    
 `define DFF_EN(q, in, clk, en) \
     always_ff @(posedge clk) begin \
         if (en) q <= in; \
+    end
+
+// Macro for memory array DFF
+`define DFF_MEM(MEM, NEXT_MEM, CLK) \
+    always_ff @(posedge CLK) begin \
+        for (int i = 0; i < $size(MEM); i++) begin \
+            MEM[i] <= NEXT_MEM[i]; \
+        end \
     end
 
 

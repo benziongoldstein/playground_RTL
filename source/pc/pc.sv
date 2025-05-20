@@ -1,3 +1,6 @@
+// PC: 32b register that holds current instruction address. 32b needed for RV32I's 4GB address space.
+// Each instruction is 4B, so PC+4 points to next instruction. Reset to 0 on rst (sync).
+
 `include "dff_macros.svh"
 
 module pc(
