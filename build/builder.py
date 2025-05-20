@@ -44,6 +44,7 @@ sys.argv.pop(1)              # Remove it so -hw/-sim/-gui work with argparse
 SRC_DIR = os.path.join(MODEL_ROOT, "source")
 VERIF_DIR = os.path.join(MODEL_ROOT, "verif")
 TARGET_DIR = os.path.join(MODEL_ROOT, "target", project)
+APP_DIR = os.path.join(MODEL_ROOT, "app")
 F_FILE = os.path.join(VERIF_DIR, project, f"{project}_list.f")
 OUT_EXEC = f"{project}.out"
 VCD_FILE = f"{project}.vcd"
@@ -61,6 +62,44 @@ def check_ip_exists(ip_name):
 
 # Validate that the IP exists
 check_ip_exists(project)
+
+# === NEW STEP: Compile app code ===
+def run_app():
+    print(f"\n🛠️  Compiling RISC-V application")
+    if not os.path.exists(APP_DIR):
+        print(f"❌ App directory not found: {APP_DIR}")
+        sys.exit(1)
+    
+    try:
+        # Change to app directory
+        os.chdir(APP_DIR)
+        
+        # Run make clean
+        print("Cleaning app build files...")
+        subprocess.run(["make", "clean"], check=True)
+        
+        # Run make
+        print("Building RISC-V application...")
+        subprocess.run(["make"], check=True)
+        
+        # Copy the inst_mem.sv file to the verification directory
+        inst_mem_src = os.path.join(APP_DIR, "inst_mem.sv")
+        inst_mem_dst = os.path.join(VERIF_DIR, project, "inst_mem.sv")
+        
+        if os.path.exists(inst_mem_src):
+            print(f"Copying memory file to {inst_mem_dst}...")
+            shutil.copy2(inst_mem_src, inst_mem_dst)
+            print("✅ App compilation successful")
+        else:
+            print(f"❌ Memory file not found: {inst_mem_src}")
+            sys.exit(1)
+        
+        # Return to the model root
+        os.chdir(MODEL_ROOT)
+    except subprocess.CalledProcessError:
+        print("❌ App compilation failed")
+        os.chdir(MODEL_ROOT)  # Ensure we return to model root even on error
+        sys.exit(1)
 
 # === STEP 2: Clean target directory ===
 def run_clean():
@@ -148,23 +187,36 @@ def run_gui():
 def main():
     parser = argparse.ArgumentParser(description="SystemVerilog Builder for any project")
     parser.add_argument("-clean", action="store_true", help="Delete all generated files for the project")
+    parser.add_argument("-app", action="store_true", help="Compile RISC-V application before hardware compilation")
     parser.add_argument("-hw", action="store_true", help="Compile only")
     parser.add_argument("-sim", action="store_true", help="Run simulation (requires -hw)")
     parser.add_argument("-gui", action="store_true", help="Open GTKWave (requires -hw and -sim)")
     parser.add_argument("-all", action="store_true", help="Run compile + sim + GTKWave")
+    parser.add_argument("-all-app", action="store_true", help="Run app compilation + compile + sim + GTKWave")
 
     args = parser.parse_args()
 
     if args.clean:
         run_clean()
-        if not (args.hw or args.sim or args.gui or args.all):
+        if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app):
             return
+
+    if args.all_app:
+        # First compile the app, then do everything else
+        run_app()
+        run_hw()
+        run_sim()
+        run_gui()
+        return
 
     if args.all:
         run_hw()
         run_sim()
         run_gui()
         return
+
+    if args.app:
+        run_app()
 
     if args.gui and (not args.hw or not args.sim):
         print("❌ GTKWave (-gui) requires both -hw and -sim")
@@ -181,8 +233,8 @@ def main():
         if args.gui:
             run_gui()
 
-    if not (args.hw or args.sim or args.gui or args.all):
-        print("ℹ️ Use -hw, -sim, -gui, or -all to run a build step")
+    if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app):
+        print("ℹ️ Use -app, -hw, -sim, -gui, -all, or -all-app to run a build step")
 
 if __name__ == "__main__":
     main()

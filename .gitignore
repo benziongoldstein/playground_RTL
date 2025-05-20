@@ -24,3 +24,14 @@ target/
 
 # Ignore the KP directory and all its contents
 source/KP/ 
+
+# RISC-V app build artifacts
+app/*.o
+app/*.elf
+app/*.bin
+app/*.dump
+app/*_clean.dump
+app/*.sv
+app/*.hex
+app/program.*
+app/inst_mem.sv 
