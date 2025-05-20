@@ -14,7 +14,7 @@ module pc(
 
     // Compute pc_plus4 = pc_out + 4 (instruction indexing)
     always_comb begin
-        pc_plus4 = pc_out + 31'd4;
+        pc_plus4 = pc_out + 32'd4;
     end
 
     // Mux to choose between pc_plus4 and alu_out

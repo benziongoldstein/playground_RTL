@@ -1,21 +1,22 @@
 `timescale 1ns / 1ps
 
 module alu_tb;
+import cpu_pkg::*;
 
     // Inputs
-    logic [31:0] a;
-    logic [31:0] b;
-    logic [3:0]  opr;
+    t_alu_op     alu_op;
+    logic [31:0] alu_in1;
+    logic [31:0] alu_in2;
 
     // Outputs
-    logic [31:0] result;
+    logic [31:0] alu_out;
 
     // Instantiate the ALU
     alu dut (
-        .a(a),
-        .b(b),
-        .opr(opr),
-        .result(result)
+        .alu_op(alu_op),
+        .alu_in1(alu_in1),
+        .alu_in2(alu_in2),
+        .alu_out(alu_out)
     );
 
     initial begin
@@ -26,74 +27,74 @@ module alu_tb;
         $display("=== ALU Testbench Start ===");
         
         // Test ADD
-        a = 32'd10; b = 32'd5; opr = 4'b0000; #1;
-        if (result === 32'd15)
-            $display("PASS: ADD: %0d + %0d = %0d", a, b, result);
+        alu_in1 = 32'd10; alu_in2 = 32'd5; alu_op = ALU_ADD; #1;
+        if (alu_out === 32'd15)
+            $display("PASS: ADD: %0d + %0d = %0d", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: ADD: %0d + %0d = %0d (Expected 15)", a, b, result);
+            $display("FAIL: ADD: %0d + %0d = %0d (Expected 15)", alu_in1, alu_in2, alu_out);
 
         // Test SUB
-        a = 32'd10; b = 32'd5; opr = 4'b1000; #1;
-        if (result === 32'd5)
-            $display("PASS: SUB: %0d - %0d = %0d", a, b, result);
+        alu_in1 = 32'd10; alu_in2 = 32'd5; alu_op = ALU_SUB; #1;
+        if (alu_out === 32'd5)
+            $display("PASS: SUB: %0d - %0d = %0d", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: SUB: %0d - %0d = %0d (Expected 5)", a, b, result);
+            $display("FAIL: SUB: %0d - %0d = %0d (Expected 5)", alu_in1, alu_in2, alu_out);
 
         // Test SLT (signed less than)
-        a = -32'd1; b = 32'd1; opr = 4'b0010; #1;
-        if (result === 32'd1)
-            $display("PASS: SLT: %0d < %0d = %0d", a, b, result);
+        alu_in1 = -32'd1; alu_in2 = 32'd1; alu_op = ALU_SLT; #1;
+        if (alu_out === 32'd1)
+            $display("PASS: SLT: %0d < %0d = %0d", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: SLT: %0d < %0d = %0d (Expected 1)", a, b, result);
+            $display("FAIL: SLT: %0d < %0d = %0d (Expected 1)", alu_in1, alu_in2, alu_out);
 
         // Test SLTU (unsigned less than)
-        a = 32'hFFFFFFFF; b = 32'd1; opr = 4'b0011; #1;
-        if (result === 32'd0)
-            $display("PASS: SLTU: %0u < %0u = %0d", a, b, result);
+        alu_in1 = 32'hFFFFFFFF; alu_in2 = 32'd1; alu_op = ALU_SLTU; #1;
+        if (alu_out === 32'd0)
+            $display("PASS: SLTU: %0u < %0u = %0d", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: SLTU: %0u < %0u = %0d (Expected 0)", a, b, result);
+            $display("FAIL: SLTU: %0u < %0u = %0d (Expected 0)", alu_in1, alu_in2, alu_out);
 
         // Test SLL (shift left logical)
-        a = 32'd1; b = 32'd3; opr = 4'b0001; #1;
-        if (result === 32'd8)
-            $display("PASS: SLL: %0d << %0d = %0d", a, b[4:0], result);
+        alu_in1 = 32'd1; alu_in2 = 32'd3; alu_op = ALU_SLL; #1;
+        if (alu_out === 32'd8)
+            $display("PASS: SLL: %0d << %0d = %0d", alu_in1, alu_in2[4:0], alu_out);
         else
-            $display("FAIL: SLL: %0d << %0d = %0d (Expected 8)", a, b[4:0], result);
+            $display("FAIL: SLL: %0d << %0d = %0d (Expected 8)", alu_in1, alu_in2[4:0], alu_out);
 
         // Test SRL (shift right logical)
-        a = 32'd8; b = 32'd3; opr = 4'b0101; #1;
-        if (result === 32'd1)
-            $display("PASS: SRL: %0d >> %0d = %0d", a, b[4:0], result);
+        alu_in1 = 32'd8; alu_in2 = 32'd3; alu_op = ALU_SRL; #1;
+        if (alu_out === 32'd1)
+            $display("PASS: SRL: %0d >> %0d = %0d", alu_in1, alu_in2[4:0], alu_out);
         else
-            $display("FAIL: SRL: %0d >> %0d = %0d (Expected 1)", a, b[4:0], result);
+            $display("FAIL: SRL: %0d >> %0d = %0d (Expected 1)", alu_in1, alu_in2[4:0], alu_out);
 
         // Test SRA (arithmetic right shift)
-        a = -32'd8; b = 32'd2; opr = 4'b1101; #1;
-        if (result === -32'd2)
-            $display("PASS: SRA: %0d >>> %0d = %0d", a, b[4:0], result);
+        alu_in1 = -32'd8; alu_in2 = 32'd2; alu_op = ALU_SRA; #1;
+        if (alu_out === -32'd2)
+            $display("PASS: SRA: %0d >>> %0d = %0d", alu_in1, alu_in2[4:0], alu_out);
         else
-            $display("FAIL: SRA: %0d >>> %0d = %0d (Expected -2)", a, b[4:0], result);
+            $display("FAIL: SRA: %0d >>> %0d = %0d (Expected -2)", alu_in1, alu_in2[4:0], alu_out);
 
         // Test XOR
-        a = 32'hF0F0F0F0; b = 32'h0F0F0F0F; opr = 4'b0100; #1;
-        if (result === 32'hFFFFFFFF)
-            $display("PASS: XOR: 0x%h ^ 0x%h = 0x%h", a, b, result);
+        alu_in1 = 32'hF0F0F0F0; alu_in2 = 32'h0F0F0F0F; alu_op = ALU_XOR; #1;
+        if (alu_out === 32'hFFFFFFFF)
+            $display("PASS: XOR: 0x%h ^ 0x%h = 0x%h", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: XOR: 0x%h ^ 0x%h = 0x%h (Expected FFFFFFFF)", a, b, result);
+            $display("FAIL: XOR: 0x%h ^ 0x%h = 0x%h (Expected FFFFFFFF)", alu_in1, alu_in2, alu_out);
 
         // Test OR
-        a = 32'hF0F00000; b = 32'h0000F0F0; opr = 4'b0110; #1;
-        if (result === 32'hF0F0F0F0)
-            $display("PASS: OR: 0x%h | 0x%h = 0x%h", a, b, result);
+        alu_in1 = 32'hF0F00000; alu_in2 = 32'h0000F0F0; alu_op = ALU_OR; #1;
+        if (alu_out === 32'hF0F0F0F0)
+            $display("PASS: OR: 0x%h | 0x%h = 0x%h", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: OR: 0x%h | 0x%h = 0x%h (Expected F0F0F0F0)", a, b, result);
+            $display("FAIL: OR: 0x%h | 0x%h = 0x%h (Expected F0F0F0F0)", alu_in1, alu_in2, alu_out);
 
         // Test AND
-        a = 32'hFF00FF00; b = 32'h0F0F0F0F; opr = 4'b0111; #1;
-        if (result === 32'h0F000F00)
-            $display("PASS: AND: 0x%h & 0x%h = 0x%h", a, b, result);
+        alu_in1 = 32'hFF00FF00; alu_in2 = 32'h0F0F0F0F; alu_op = ALU_AND; #1;
+        if (alu_out === 32'h0F000F00)
+            $display("PASS: AND: 0x%h & 0x%h = 0x%h", alu_in1, alu_in2, alu_out);
         else
-            $display("FAIL: AND: 0x%h & 0x%h = 0x%h (Expected 0F000F00)", a, b, result);
+            $display("FAIL: AND: 0x%h & 0x%h = 0x%h (Expected 0F000F00)", alu_in1, alu_in2, alu_out);
 
         $display("=== ALU Testbench Complete ===");
         $finish;
