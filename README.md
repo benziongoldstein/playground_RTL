@@ -25,6 +25,13 @@ A collection of reusable digital design components including:
 - Parameterized multiplexers
 - Other common digital building blocks
 
+### 6. RISC-V Assembly Testing Infrastructure
+A minimal RISC-V testing environment that allows direct assembly code testing without requiring a C main function. This infrastructure includes:
+- Custom linker script for RISC-V
+- Minimal CRT0 (C Runtime) implementation
+- Assembly-only build mode
+- Simple test framework for assembly code
+
 #### Installation Instructions
 
 1. **Clone the repository:**
@@ -95,3 +102,27 @@ For questions or support, please contact the maintainer at benziong@mail.tau.ac.
 ---
 
 *More projects will be added as this playground grows!*
+
+#### Building and Testing Assembly Code
+1. **Build with assembly mode:**
+   ```bash
+   make -asm
+   ```
+   This will compile and link your assembly code directly.
+
+2. **Write your assembly tests:**
+   Create `.s` files in the `app` directory. The infrastructure supports:
+   - Direct assembly code execution
+   - No C runtime dependencies
+   - Simple test framework for assembly verification
+
+3. **Example assembly test:**
+   ```assembly
+   .section .text
+   .global _start
+   _start:
+       # Your test code here
+       li a0, 0    # Set return value
+       li a7, 10   # Exit syscall
+       ecall
+   ```

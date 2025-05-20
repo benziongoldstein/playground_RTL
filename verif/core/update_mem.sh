@@ -7,15 +7,27 @@ echo "Updating instruction memory file..."
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 echo "Workspace root: $WORKSPACE_ROOT"
 
-# Navigate to app directory and build the program
+# Check for -asm flag to determine build mode
+ASM_MODE=0
+if [ "$1" == "-asm" ]; then
+    ASM_MODE=1
+    echo "Using assembly-only mode"
+fi
+
+# Navigate to app directory
 cd "$WORKSPACE_ROOT/app"
 echo "Building program in $(pwd)"
-make
 
-# Generate or update inst_mem.sv if it doesn't exist yet
-if [ ! -f "inst_mem.sv" ]; then
-    echo "Creating inst_mem.sv from program.elf"
-    riscv64-unknown-elf-objcopy --srec-len 1 --output-target=verilog program.elf inst_mem.sv
+if [ $ASM_MODE -eq 1 ]; then
+    # Assembly-only mode
+    echo "Building assembly test..."
+    make clean
+    make asm
+else
+    # Normal C+assembly mode
+    echo "Building C program..."
+    make clean
+    make
 fi
 
 # Copy the SystemVerilog memory file to the testbench directory

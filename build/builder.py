@@ -64,7 +64,7 @@ def check_ip_exists(ip_name):
 check_ip_exists(project)
 
 # === NEW STEP: Compile app code ===
-def run_app():
+def run_app(use_asm_mode=False):
     print(f"\n🛠️  Compiling RISC-V application")
     if not os.path.exists(APP_DIR):
         print(f"❌ App directory not found: {APP_DIR}")
@@ -78,9 +78,13 @@ def run_app():
         print("Cleaning app build files...")
         subprocess.run(["make", "clean"], check=True)
         
-        # Run make
-        print("Building RISC-V application...")
-        subprocess.run(["make"], check=True)
+        # Run make with appropriate target
+        if use_asm_mode:
+            print("Building assembly-only test...")
+            subprocess.run(["make", "asm"], check=True)
+        else:
+            print("Building RISC-V C application...")
+            subprocess.run(["make"], check=True)
         
         # Copy the inst_mem.sv file to the verification directory
         inst_mem_src = os.path.join(APP_DIR, "inst_mem.sv")
@@ -188,22 +192,32 @@ def main():
     parser = argparse.ArgumentParser(description="SystemVerilog Builder for any project")
     parser.add_argument("-clean", action="store_true", help="Delete all generated files for the project")
     parser.add_argument("-app", action="store_true", help="Compile RISC-V application before hardware compilation")
+    parser.add_argument("-asm", action="store_true", help="Use assembly-only mode for RISC-V application")
     parser.add_argument("-hw", action="store_true", help="Compile only")
     parser.add_argument("-sim", action="store_true", help="Run simulation (requires -hw)")
     parser.add_argument("-gui", action="store_true", help="Open GTKWave (requires -hw and -sim)")
     parser.add_argument("-all", action="store_true", help="Run compile + sim + GTKWave")
     parser.add_argument("-all-app", action="store_true", help="Run app compilation + compile + sim + GTKWave")
+    parser.add_argument("-all-asm", action="store_true", help="Run assembly compilation + compile + sim + GTKWave")
 
     args = parser.parse_args()
 
     if args.clean:
         run_clean()
-        if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app):
+        if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app or args.all_asm or args.asm):
             return
+
+    if args.all_asm:
+        # Assembly-only mode followed by all steps
+        run_app(use_asm_mode=True)
+        run_hw()
+        run_sim()
+        run_gui()
+        return
 
     if args.all_app:
         # First compile the app, then do everything else
-        run_app()
+        run_app(use_asm_mode=False)
         run_hw()
         run_sim()
         run_gui()
@@ -216,7 +230,12 @@ def main():
         return
 
     if args.app:
-        run_app()
+        # Normal app mode (C + assembly)
+        run_app(use_asm_mode=args.asm)
+
+    if args.asm and not args.app:
+        # Assembly-only mode without app flag
+        run_app(use_asm_mode=True)
 
     if args.gui and (not args.hw or not args.sim):
         print("❌ GTKWave (-gui) requires both -hw and -sim")
@@ -233,8 +252,8 @@ def main():
         if args.gui:
             run_gui()
 
-    if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app):
-        print("ℹ️ Use -app, -hw, -sim, -gui, -all, or -all-app to run a build step")
+    if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app or args.all_asm or args.asm):
+        print("ℹ️ Use -app, -asm, -hw, -sim, -gui, -all, -all-app, or -all-asm to run a build step")
 
 if __name__ == "__main__":
     main()

@@ -34,4 +34,10 @@ app/*_clean.dump
 app/*.sv
 app/*.hex
 app/program.*
-app/inst_mem.sv 
+app/inst_mem.sv
+app/test.elf
+app/test.bin
+app/test.dump
+app/test_clean.dump
+app/test_inst_mem.sv
+app/test.hex 
