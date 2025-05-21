@@ -79,12 +79,7 @@ Here are some common RV32I instructions to use in your tests:
 
 To use your assembly test in simulation after building with `make asm`:
 
-```bash
-cd ../verif/core
-./run_sim.sh
-```
-
-Or use the builder script:
+use the builder script:
 
 ```bash
 python ../build/builder.py core -hw -sim

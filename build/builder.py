@@ -87,7 +87,7 @@ def run_app(use_asm_mode=False):
             subprocess.run(["make"], check=True)
         
         # Copy the inst_mem.sv file to the verification directory
-        inst_mem_src = os.path.join(APP_DIR, "inst_mem.sv")
+        inst_mem_src = os.path.join(TARGET_DIR, "test_inst_mem.sv" if use_asm_mode else "inst_mem.sv")
         inst_mem_dst = os.path.join(VERIF_DIR, project, "inst_mem.sv")
         
         if os.path.exists(inst_mem_src):
