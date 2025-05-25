@@ -184,5 +184,60 @@ def main():
     if not (args.hw or args.sim or args.gui or args.all):
         print("ℹ️ Use -hw, -sim, -gui, or -all to run a build step")
 
+def run_app(use_asm_mode=False):
+    print(f"\n🛠️  Compiling RISC-V application")
+    if not os.path.exists(APP_DIR):
+        print(f"❌ App directory not found: {APP_DIR}")
+        sys.exit(1)
+
+    orig_dir = os.getcwd()
+    try:
+        # Change to app directory
+        os.chdir(APP_DIR)
+
+        # Run make clean
+        print("Cleaning app build files...")
+        result = subprocess.run(["make", "clean"])
+        if result.returncode != 0:
+            print("❌ make clean failed")
+            os.chdir(orig_dir)
+            sys.exit(1)
+
+        # Run make with appropriate target
+        if use_asm_mode:
+            print("Building assembly-only test...")
+            result = subprocess.run(["make", "asm"])
+        else:
+            print("Building RISC-V C application...")
+            result = subprocess.run(["make"])
+        if result.returncode != 0:
+            print("❌ Build failed (see output above)")
+            os.chdir(orig_dir)
+            sys.exit(1)
+
+        # Copy the inst_mem.sv file to the verification directory
+        inst_mem_src = os.path.join(TARGET_DIR, "test_inst_mem.sv" if use_asm_mode else "inst_mem.sv")
+        inst_mem_dst = os.path.join(VERIF_DIR, project, "inst_mem.sv")
+
+        if os.path.exists(inst_mem_src):
+            print(f"Copying memory file to {inst_mem_dst}...")
+            shutil.copy2(inst_mem_src, inst_mem_dst)
+            print(f"✅ App compilation successful. Memory file copied to {inst_mem_dst}")
+        else:
+            print(f"❌ Memory file not found: {inst_mem_src}")
+            os.chdir(orig_dir)
+            sys.exit(1)
+
+        # Return to the original directory
+        os.chdir(orig_dir)
+    except subprocess.CalledProcessError:
+        print("❌ App compilation failed (exception)")
+        os.chdir(orig_dir)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        os.chdir(orig_dir)
+        sys.exit(1)
+
 if __name__ == "__main__":
     main()
