@@ -1,53 +1,103 @@
 module core_tb;
 
+//clock and reset
 logic clk;
 logic rst;
 
-// Clock generation
-initial clk = 0;
-always #5 clk = ~clk;
+// Simulation control
+int cycles;
+localparam int MAX_CYCLES = 100;
 
-// Reset
+// assign clock and reset
 initial begin
+    // Setup VCD file for waveform dumping
+    string vcd_path;
+    if (!$value$plusargs("VCD=%s", vcd_path)) vcd_path = "target/core/core.vcd";
+    $dumpfile(vcd_path);
+    $dumpvars(0, core_tb);
+    
+    clk = 0;
     rst = 1;
+    cycles = 0;
     #10 rst = 0;
 end
+// clock generation
+always #5 clk = ~clk;
 
-// VCD dump
+// Load instruction memory from compiled program
 initial begin
-    $dumpfile("target/core/core.vcd");
-    $dumpvars(0, core_tb);
+    string mem_file;
+    int fd, status;
+    bit [7:0] memory[0:4095]; // Temporary memory for loading
+    bit [31:0] address;
+    
+    // Initialize memory to zeros
+    for (int i = 0; i < 128; i++) begin
+        core.i_mem.mem[i] = 8'h00;
+    end
+    
+    // Open memory file and read content
+    mem_file = "verif/core/inst_mem.sv";
+    $display("Loading instruction memory from %s...", mem_file);
+    
+    // Use system task to load memory from inst_mem.sv
+    fd = $fopen(mem_file, "r");
+    if (fd) begin
+        $display("Successfully opened memory file");
+        // The $readmemh function will automatically handle the @address directives
+        $readmemh(mem_file, core.i_mem.mem);
+        $fclose(fd);
+    end else begin
+        $display("Error: Could not open memory file %s", mem_file);
+        $finish;
+    end
+    
+    // Debug: Display the first few instructions loaded
+    $display("First few memory bytes after loading:");
+    for (int i = 0; i < 16; i += 4) begin
+        $display("mem[%0d:%0d] = %02h %02h %02h %02h (as instruction: %08h)", 
+                i, i+3, 
+                core.i_mem.mem[i], 
+                core.i_mem.mem[i+1], 
+                core.i_mem.mem[i+2], 
+                core.i_mem.mem[i+3],
+                {core.i_mem.mem[i+3], core.i_mem.mem[i+2], core.i_mem.mem[i+1], core.i_mem.mem[i]});
+    end
+    
+    @(negedge rst);
+    @(posedge clk);
 end
 
-// Load three instructions into instruction memory
-logic [31:0] instruction;
-initial begin
-    @(negedge rst);
-    // ADDI x1, x0, 1
-    instruction = 32'b000000000001_00000_000_00001_0010011;
-    core.i_mem.mem[0] = instruction[7:0];
-    core.i_mem.mem[1] = instruction[15:8];
-    core.i_mem.mem[2] = instruction[23:16];
-    core.i_mem.mem[3] = instruction[31:24];
-    // ADD x2, x1, x0 (x2 = x1 + x0)
-    instruction = 32'b0000000_00000_00001_000_00010_0110011;
-    core.i_mem.mem[4] = instruction[7:0];
-    core.i_mem.mem[5] = instruction[15:8];
-    core.i_mem.mem[6] = instruction[23:16];
-    core.i_mem.mem[7] = instruction[31:24];
-    // ADD x3, x1, x2 (x3 = x1 + x2)
-    instruction = 32'b0000000_00010_00001_000_00011_0110011;
-    core.i_mem.mem[8] = instruction[7:0];
-    core.i_mem.mem[9] = instruction[15:8];
-    core.i_mem.mem[10] = instruction[23:16];
-    core.i_mem.mem[11] = instruction[31:24];
+// Cycle counter and simulation termination
+always @(posedge clk) begin
+    cycles <= cycles + 1;
+    if (cycles >= MAX_CYCLES) begin
+        $display("Simulation reached maximum cycle count of %0d", MAX_CYCLES);
+        $finish;
+    end
 end
 
-// Run for a few cycles and finish
-initial begin
-    @(negedge rst);
-    repeat (7) @(posedge clk);
-    $finish;
+// Monitor for register file changes
+always @(posedge clk) begin
+    if (!rst) begin
+        for (int i = 1; i <= 31; i++) begin
+            if (core.rf.write_e && core.rf.rd == i)
+                $display("Time %0t: Register x%0d updated to %0h", $time, i, core.rf.write_d);
+        end
+    end
+end
+
+// Add instruction monitor
+always @(posedge clk) begin
+    if (!rst) begin
+        $display("Time %0t: PC=%08h, Instruction=%08h", 
+                 $time, 
+                 core.pc_out, 
+                 {core.i_mem.mem[core.pc_out+3], 
+                  core.i_mem.mem[core.pc_out+2], 
+                  core.i_mem.mem[core.pc_out+1], 
+                  core.i_mem.mem[core.pc_out]});
+    end
 end
 
 core core(

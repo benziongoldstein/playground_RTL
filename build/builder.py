@@ -44,6 +44,7 @@ sys.argv.pop(1)              # Remove it so -hw/-sim/-gui work with argparse
 SRC_DIR = os.path.join(MODEL_ROOT, "source")
 VERIF_DIR = os.path.join(MODEL_ROOT, "verif")
 TARGET_DIR = os.path.join(MODEL_ROOT, "target", project)
+APP_DIR = os.path.join(MODEL_ROOT, "app")
 F_FILE = os.path.join(VERIF_DIR, project, f"{project}_list.f")
 OUT_EXEC = f"{project}.out"
 VCD_FILE = f"{project}.vcd"
@@ -61,6 +62,48 @@ def check_ip_exists(ip_name):
 
 # Validate that the IP exists
 check_ip_exists(project)
+
+# === NEW STEP: Compile app code ===
+def run_app(use_asm_mode=False):
+    print(f"\n🛠️  Compiling RISC-V application")
+    if not os.path.exists(APP_DIR):
+        print(f"❌ App directory not found: {APP_DIR}")
+        sys.exit(1)
+    
+    try:
+        # Change to app directory
+        os.chdir(APP_DIR)
+        
+        # Run make clean
+        print("Cleaning app build files...")
+        subprocess.run(["make", "clean"], check=True)
+        
+        # Run make with appropriate target
+        if use_asm_mode:
+            print("Building assembly-only test...")
+            subprocess.run(["make", "asm"], check=True)
+        else:
+            print("Building RISC-V C application...")
+            subprocess.run(["make"], check=True)
+        
+        # Copy the inst_mem.sv file to the verification directory
+        inst_mem_src = os.path.join(TARGET_DIR, "test_inst_mem.sv" if use_asm_mode else "inst_mem.sv")
+        inst_mem_dst = os.path.join(VERIF_DIR, project, "inst_mem.sv")
+        
+        if os.path.exists(inst_mem_src):
+            print(f"Copying memory file to {inst_mem_dst}...")
+            shutil.copy2(inst_mem_src, inst_mem_dst)
+            print("✅ App compilation successful")
+        else:
+            print(f"❌ Memory file not found: {inst_mem_src}")
+            sys.exit(1)
+        
+        # Return to the model root
+        os.chdir(MODEL_ROOT)
+    except subprocess.CalledProcessError:
+        print("❌ App compilation failed")
+        os.chdir(MODEL_ROOT)  # Ensure we return to model root even on error
+        sys.exit(1)
 
 # === STEP 2: Clean target directory ===
 def run_clean():
@@ -148,23 +191,51 @@ def run_gui():
 def main():
     parser = argparse.ArgumentParser(description="SystemVerilog Builder for any project")
     parser.add_argument("-clean", action="store_true", help="Delete all generated files for the project")
+    parser.add_argument("-app", action="store_true", help="Compile RISC-V application before hardware compilation")
+    parser.add_argument("-asm", action="store_true", help="Use assembly-only mode for RISC-V application")
     parser.add_argument("-hw", action="store_true", help="Compile only")
     parser.add_argument("-sim", action="store_true", help="Run simulation (requires -hw)")
     parser.add_argument("-gui", action="store_true", help="Open GTKWave (requires -hw and -sim)")
     parser.add_argument("-all", action="store_true", help="Run compile + sim + GTKWave")
+    parser.add_argument("-all-app", action="store_true", help="Run app compilation + compile + sim + GTKWave")
+    parser.add_argument("-all-asm", action="store_true", help="Run assembly compilation + compile + sim + GTKWave")
 
     args = parser.parse_args()
 
     if args.clean:
         run_clean()
-        if not (args.hw or args.sim or args.gui or args.all):
+        if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app or args.all_asm or args.asm):
             return
+
+    if args.all_asm:
+        # Assembly-only mode followed by all steps
+        run_app(use_asm_mode=True)
+        run_hw()
+        run_sim()
+        run_gui()
+        return
+
+    if args.all_app:
+        # First compile the app, then do everything else
+        run_app(use_asm_mode=False)
+        run_hw()
+        run_sim()
+        run_gui()
+        return
 
     if args.all:
         run_hw()
         run_sim()
         run_gui()
         return
+
+    if args.app:
+        # Normal app mode (C + assembly)
+        run_app(use_asm_mode=args.asm)
+
+    if args.asm and not args.app:
+        # Assembly-only mode without app flag
+        run_app(use_asm_mode=True)
 
     if args.gui and (not args.hw or not args.sim):
         print("❌ GTKWave (-gui) requires both -hw and -sim")
@@ -181,63 +252,8 @@ def main():
         if args.gui:
             run_gui()
 
-    if not (args.hw or args.sim or args.gui or args.all):
-        print("ℹ️ Use -hw, -sim, -gui, or -all to run a build step")
-
-def run_app(use_asm_mode=False):
-    print(f"\n🛠️  Compiling RISC-V application")
-    if not os.path.exists(APP_DIR):
-        print(f"❌ App directory not found: {APP_DIR}")
-        sys.exit(1)
-
-    orig_dir = os.getcwd()
-    try:
-        # Change to app directory
-        os.chdir(APP_DIR)
-
-        # Run make clean
-        print("Cleaning app build files...")
-        result = subprocess.run(["make", "clean"])
-        if result.returncode != 0:
-            print("❌ make clean failed")
-            os.chdir(orig_dir)
-            sys.exit(1)
-
-        # Run make with appropriate target
-        if use_asm_mode:
-            print("Building assembly-only test...")
-            result = subprocess.run(["make", "asm"])
-        else:
-            print("Building RISC-V C application...")
-            result = subprocess.run(["make"])
-        if result.returncode != 0:
-            print("❌ Build failed (see output above)")
-            os.chdir(orig_dir)
-            sys.exit(1)
-
-        # Copy the inst_mem.sv file to the verification directory
-        inst_mem_src = os.path.join(TARGET_DIR, "test_inst_mem.sv" if use_asm_mode else "inst_mem.sv")
-        inst_mem_dst = os.path.join(VERIF_DIR, project, "inst_mem.sv")
-
-        if os.path.exists(inst_mem_src):
-            print(f"Copying memory file to {inst_mem_dst}...")
-            shutil.copy2(inst_mem_src, inst_mem_dst)
-            print(f"✅ App compilation successful. Memory file copied to {inst_mem_dst}")
-        else:
-            print(f"❌ Memory file not found: {inst_mem_src}")
-            os.chdir(orig_dir)
-            sys.exit(1)
-
-        # Return to the original directory
-        os.chdir(orig_dir)
-    except subprocess.CalledProcessError:
-        print("❌ App compilation failed (exception)")
-        os.chdir(orig_dir)
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Unexpected error: {e}")
-        os.chdir(orig_dir)
-        sys.exit(1)
+    if not (args.hw or args.sim or args.gui or args.all or args.all_app or args.app or args.all_asm or args.asm):
+        print("ℹ️ Use -app, -asm, -hw, -sim, -gui, -all, -all-app, or -all-asm to run a build step")
 
 if __name__ == "__main__":
     main()

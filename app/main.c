@@ -1,20 +1,16 @@
-// Simple test program for RISC-V CPU
-// Uses only supported instructions: addi, add, nop
+/*
+ * Minimal RISC-V test program with only additions
+ */
 
 int main() {
-    // Test 1: Basic arithmetic
-    int x1 = 1;  // addi x1, x0, 1
-    int x2 = 2;  // addi x2, x0, 2
-    int x3 = x1 + x2;  // add x3, x1, x2
+    // Use only addition operations
+    volatile int a = 1;
+    volatile int b = 2;
+    volatile int c = a + b;
 
-    // Test 2: More arithmetic
-    int x4 = 5;  // addi x4, x0, 5
-    int x5 = x3 + x4;  // add x5, x3, x4
-
-    // Infinite loop (halt)
     while(1) {
-        // nop
+        c = a + b;
     }
 
-    return 0;  // Never reached
+    return 0;
 }
