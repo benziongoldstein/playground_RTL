@@ -82,7 +82,7 @@ A collection of reusable digital design components including:
 
 #### Contributing
 
-Contributions are welcome! Please fork the repository and submit a pull request. For major changes, open an issue first to discuss what you would like to change.
+Contributions are welcome! For major changes, open an issue first to discuss what you would like to change.
 
 #### License
 
