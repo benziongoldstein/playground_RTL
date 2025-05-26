@@ -87,7 +87,7 @@ def run_clean():
     if not removed_any:
         print("ℹ️  Target folder was already empty.")
 
-# === STEP 3: Compile using file list ===
+# === STEP 3: Compile using QuestaSim vlog ===
 def run_hw():
     print(f"\n🛠️  Compiling project: {project}")
     print(f"🔍 Using file list: {F_FILE}")
@@ -97,16 +97,21 @@ def run_hw():
         print(f"❌ Missing file list: {F_FILE}")
         sys.exit(1)
 
-    # Use the -f flag to directly include the file list instead of parsing it manually
+    # Clean/create work library in target dir
+    worklib_path = os.path.join(TARGET_DIR, "work")
+    if os.path.exists(worklib_path):
+        shutil.rmtree(worklib_path)
+    os.makedirs(worklib_path, exist_ok=True)
+
+    # Compile with vlog, using the file list and disable optimization for full debug visibility
     compile_cmd = [
-        "iverilog",
-        "-g2012",
-        "-f", F_FILE,
-        "-o", os.path.join(TARGET_DIR, OUT_EXEC)
+        "vlog",
+        "-O0",  # Disable optimization for debug
+        "-work", worklib_path,
+        "-f", F_FILE
     ]
 
-    print("Compile command:", " ".join(compile_cmd))  # Optional: for debugging
-
+    print("Compile command:", " ".join(compile_cmd))
     try:
         subprocess.run(compile_cmd, check=True)
         print("✅ Compilation successful")
@@ -114,35 +119,88 @@ def run_hw():
         print("❌ Compilation failed")
         sys.exit(1)
 
-# === STEP 4: Run simulation ===
+# === STEP 4: Run simulation with QuestaSim vsim ===
 def run_sim():
     print("\n🚀 Running simulation...")
     vcd_path = os.path.join(TARGET_DIR, VCD_FILE)
     prev_vcd_path = vcd_path.replace(".vcd", "_prev.vcd")
 
+    # Ensure TARGET_DIR exists before simulation (fix for VCD error)
+    if not os.path.exists(TARGET_DIR):
+        os.makedirs(TARGET_DIR, exist_ok=True)
+
+    # Ensure VCD output directory exists if needed (for nested paths)
+    vcd_dir = os.path.dirname(vcd_path)
+    if vcd_dir and not os.path.exists(vcd_dir):
+        os.makedirs(vcd_dir, exist_ok=True)
+
     if os.path.exists(vcd_path):
         os.rename(vcd_path, prev_vcd_path)
         print(f"📦 Backed up previous VCD to: {prev_vcd_path}")
 
-    sim_cmd = ["vvp", os.path.join(TARGET_DIR, OUT_EXEC), f"+VCD={vcd_path}"]
+    # Guess top module name (by convention)
+    top_module = f"{project}_tb"
+    worklib_path = os.path.join(TARGET_DIR, "work")
 
+    # QuestaSim expects the work library to be in the current directory or specified by -L
+    # Change to target dir for simulation
+    sim_cmd = [
+        "vsim",
+        "-c",
+        "-lib", worklib_path,
+        top_module,
+        "-do", "run -all; quit"
+    ]
+
+    print("Simulation command:", " ".join(sim_cmd))
     try:
-        subprocess.run(sim_cmd, check=True)
+        subprocess.run(sim_cmd, cwd=TARGET_DIR, check=True)
         print("✅ Simulation completed")
     except subprocess.CalledProcessError:
         print("❌ Simulation failed")
         sys.exit(1)
 
+    # After simulation:
+    dump_vcd = os.path.join(TARGET_DIR, "dump.vcd")
+    if os.path.exists(dump_vcd) and not os.path.exists(vcd_path):
+        os.rename(dump_vcd, vcd_path)
+
 # === STEP 5: Launch GTKWave ===
 def run_gui():
-    print("\n🖥️ Launching GTKWave...")
-    vcd_path = os.path.join(TARGET_DIR, VCD_FILE)
+    print("\n🖥️ Launching QuestaSim GUI...")
+    top_module = f"{project}_tb"
+    worklib_path = os.path.join(TARGET_DIR, "work")
+    do_file = os.path.join(TARGET_DIR, "wave.do")
 
-    if not os.path.exists(vcd_path):
-        print(f"❌ VCD file not found: {vcd_path}")
-        sys.exit(1)
+    # Create a wave.do file to add signals, open the viewer, THEN run the sim
+    with open(do_filegg, "w") as f:
+        f.write(f"""
+# Add all signals in the testbench and DUT to the waveform viewer
+add wave -r {top_module}/*
+add wave -r {top_module}/dut/*
 
-    subprocess.run(["gtkwave", vcd_path])
+view wave
+
+# Suppress finish prompt
+set PrefMain(finishPrompt) false
+
+# Now run the simulation until finish
+run -all
+
+# Zoom to full waveform
+wave zoom full
+""")
+
+    sim_cmd = [
+        "vsim",
+        "-voptargs=+acc",  # Preserve all hierarchy and signal visibility
+        "-lib", worklib_path,
+        top_module,
+        "-do", "wave.do"
+    ]
+
+    print("GUI command:", " ".join(sim_cmd))
+    subprocess.run(sim_cmd, cwd=TARGET_DIR)
 
 # === STEP 6: CLI Handling ===
 def main():
@@ -182,7 +240,7 @@ def main():
             run_gui()
 
     if not (args.hw or args.sim or args.gui or args.all):
-        print("ℹ️ Use -hw, -sim, -gui, or -all to run a build step")
+        print("Use -hw, -sim, -gui, or -all to run a build step")
 
 if __name__ == "__main__":
     main()
