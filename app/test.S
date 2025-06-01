@@ -3,9 +3,7 @@
 
 main:
     nop
-    nop
-    addi x1, x0, 5     # x1 = 5
-    addi x2, x0, 6      # x2 = 6
-    add  x3, x1, x2     # x3 = x1 + x2
+    addi x1, x0, 6      # x1 = 6
+    addi x2, x0, 5      # x2 = 5
+    sub  x3, x1, x2     # x3 = x1 - x2 = 1
     nop                 # Do nothing (safe infinite loop)
-    nop

@@ -41,11 +41,22 @@ always_comb begin
     
     // Set instruction-specific control signals
     case (instruction[6:0])
-        7'b0110011: begin // R-type (ADD)
+        7'b0110011: begin // R-type (ADD/SUB)
             ctrl.sel_alu_imm = 1'b0; // Use register for ALU input 2
+            case(instruction[14:12]) // funct3
+                3'b000: begin
+                    if (instruction[31:25] == 7'b0100000)
+                        ctrl.alu_op = ALU_SUB; // sub
+                    else
+                        ctrl.alu_op = ALU_ADD; // add
+                end
+                // You can add more funct3 cases here for other R-type ops
+                default: ctrl.alu_op = ALU_ADD;
+            endcase
         end
         7'b0010011: begin // I-type (ADDI)
             ctrl.sel_alu_imm = 1'b1; // Use immediate for ALU input 2
+            ctrl.alu_op = ALU_ADD;
         end
         default: begin
             // Keep default values for unsupported instructions
