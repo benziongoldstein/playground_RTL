@@ -50,7 +50,30 @@ always_comb begin
                     else
                         ctrl.alu_op = ALU_ADD; // add
                 end
-                // You can add more funct3 cases here for other R-type ops
+                3'b001: begin // SLL (Shift Left Logical)
+                ctrl.alu_op = ALU_SLL;
+                end
+                3'b010: begin // SLT (Set Less Than)
+                ctrl.alu_op = ALU_SLT;
+                end
+                3'b011: begin // SLTU (Set Less Than Unsigned)
+                    ctrl.alu_op = ALU_SLTU;
+                end
+                3'b100: begin // XOR
+                    ctrl.alu_op = ALU_XOR;
+                end
+                3'b101: begin // SRL/SRA (Shift Right Logical/Arithmetic)
+                    if (instruction[31:25] == 7'b0100000)
+                        ctrl.alu_op = ALU_SRA; // Arithmetic shift
+                    else
+                        ctrl.alu_op = ALU_SRL; // Logical shift
+                end
+                3'b110: begin // OR
+                    ctrl.alu_op = ALU_OR;
+                end
+                3'b111: begin // AND
+                    ctrl.alu_op = ALU_AND;
+                end
                 default: ctrl.alu_op = ALU_ADD;
             endcase
         end
