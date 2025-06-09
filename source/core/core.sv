@@ -49,8 +49,7 @@ mem i_mem(
     .adrs_rd      (pc_out),
     .rd_data      (instruction),
     .wr_en        (1'b0),
-    .byt_en_wr    (4'b0),
-    .byt_en_rd    (4'b1111),
+    .byt_en       (4'b1111),
     .sign_ext     (1'b0),
     .adrs_wr      (32'b0),
     .wr_data      (32'b0)
@@ -96,8 +95,7 @@ mem d_mem(
     .adrs_rd      (alu_out),
     .rd_data      (mem_rd_data),
     .wr_en        (ctrl.mem_wr_en),
-    .byt_en_wr    (ctrl.mem_byt_en),
-    .byt_en_rd    (ctrl.mem_byt_en),
+    .byt_en       (ctrl.mem_byt_en),
     .sign_ext     (ctrl.sign_ext),
     .adrs_wr      (alu_out),
     .wr_data      (reg_data2)

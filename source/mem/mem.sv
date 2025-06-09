@@ -16,8 +16,7 @@ module mem(
     input  logic [31:0] adrs_rd,    // Read address
     output logic [31:0] rd_data,    // Read data output
     input  logic        wr_en,      // Write enable (1 = write, 0 = read)
-    input  logic [3:0]  byt_en_wr,  // Byte enables for write
-    input  logic [3:0]  byt_en_rd,  // Byte enables for read
+    input  logic [3:0]  byt_en,     // Byte enables for write
     input  logic        sign_ext,   // Sign extension enable
     input  logic [31:0] adrs_wr,    // Write address
     input  logic [31:0] wr_data     // Data to write
@@ -32,13 +31,13 @@ logic [7:0] next_mem [1023:0];      // Next state memory (for clocked updates)
 // Memory Read Logic
 // -----------------------
 always_comb begin
-    rd_data[7:0]   = byt_en_rd[0]  ? mem[adrs_rd]     : 8'b0;
-    rd_data[15:8]  = byt_en_rd[1]  ? mem[adrs_rd + 1] :      
-                     sign_ext      ? {8{rd_data[7]}}  : 8'b0;
-    rd_data[23:16] = byt_en_rd[2]  ? mem[adrs_rd + 2] : 
-                     sign_ext      ? {8{rd_data[15]}} : 8'b0;
-    rd_data[31:24] = byt_en_rd[3]  ? mem[adrs_rd + 3] : 
-                     sign_ext      ? {8{rd_data[23]}} : 8'b0;
+    rd_data[7:0]   = byt_en[0]  ? mem[adrs_rd]     : 8'b0;
+    rd_data[15:8]  = byt_en[1]  ? mem[adrs_rd + 1] :      
+                     sign_ext   ? {8{rd_data[7]}}  : 8'b0;
+    rd_data[23:16] = byt_en[2]  ? mem[adrs_rd + 2] : 
+                     sign_ext   ? {8{rd_data[15]}} : 8'b0;
+    rd_data[31:24] = byt_en[3]  ? mem[adrs_rd + 3] : 
+                     sign_ext   ? {8{rd_data[23]}} : 8'b0;
 end
 
 // -----------------------
@@ -51,10 +50,10 @@ always_comb begin
         next_mem[i] = mem[i]; // Default: keep old values
     end
     if (wr_en) begin
-        if (byt_en_wr[0]) next_mem[adrs_wr + 0] = wr_data[7:0];    // Write byte 0
-        if (byt_en_wr[1]) next_mem[adrs_wr + 1] = wr_data[15:8];   // Write byte 1
-        if (byt_en_wr[2]) next_mem[adrs_wr + 2] = wr_data[23:16];  // Write byte 2
-        if (byt_en_wr[3]) next_mem[adrs_wr + 3] = wr_data[31:24];  // Write byte 3
+        if (byt_en[0]) next_mem[adrs_wr + 0] = wr_data[7:0];    // Write byte 0
+        if (byt_en[1]) next_mem[adrs_wr + 1] = wr_data[15:8];   // Write byte 1
+        if (byt_en[2]) next_mem[adrs_wr + 2] = wr_data[23:16];  // Write byte 2
+        if (byt_en[3]) next_mem[adrs_wr + 3] = wr_data[31:24];  // Write byte 3
     end
 end
 
