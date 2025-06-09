@@ -52,20 +52,16 @@ initial begin
         $finish;
     end
     
-    // Debug: Display the first few instructions loaded
-    $display("First few memory bytes after loading:");
-    for (int i = 0; i < 16; i += 4) begin
-        $display("mem[%0d:%0d] = %02h %02h %02h %02h (as instruction: %08h)", 
-                i, i+3, 
-                core.i_mem.mem[i], 
-                core.i_mem.mem[i+1], 
-                core.i_mem.mem[i+2], 
-                core.i_mem.mem[i+3],
-                {core.i_mem.mem[i+3], core.i_mem.mem[i+2], core.i_mem.mem[i+1], core.i_mem.mem[i]});
-    end
-    
     @(negedge rst);
     @(posedge clk);
+end
+
+//check if ebreak is hit
+always_comb begin
+    if (core.instruction == 32'h00100073) begin
+        $display("EBREAK hit at time %0t", $time);
+        $finish;
+    end
 end
 
 // Cycle counter and simulation termination
@@ -77,27 +73,54 @@ always @(posedge clk) begin
     end
 end
 
-// Monitor for register file changes
+// Monitor for instruction fetch and register file changes
+
 always @(posedge clk) begin
     if (!rst) begin
-        for (int i = 1; i <= 31; i++) begin
-            if (core.rf.write_e && core.rf.rd == i)
-                $display("Time %0t: Register x%0d updated to %0h", $time, i, core.rf.write_d);
+        $write("Time %0t: PC=%08h, Instruction=%08h", 
+               $time, 
+               core.pc_out,
+               {core.i_mem.mem[core.pc_out+3],
+                core.i_mem.mem[core.pc_out+2],
+                core.i_mem.mem[core.pc_out+1],
+                core.i_mem.mem[core.pc_out]});
+                
+        
+
+        if (core.rf.write_e) begin
+            $write(", Register x%0d = %08h", core.rf.rd, core.rf.write_d);
+        
+
+        if(core.instruction[6:0] == 7'b0000011) begin
+            if((core.ctrl.mem_byt_en == 4'b0001) && (core.ctrl.sign_ext == 1'b1)) begin
+                $write(", LB  mem[%08h]", core.alu_out);
+            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+                $write(", LH  mem[%08h]", core.alu_out);
+            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+                $write(", LW  mem[%08h]", core.alu_out);
+            end
+            else if((core.ctrl.mem_byt_en == 4'b0001) && (core.ctrl.sign_ext == 1'b0)) begin
+                $write(", LBU mem[%08h]", core.alu_out);
+            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+                $write(", LHU mem[%08h]", core.alu_out);
+            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+                $write(", LW  mem[%08h]", core.alu_out);
+            end
+        end
+        
+        end else if(core.ctrl.mem_wr_en) begin
+            if(core.ctrl.mem_byt_en == 4'b0001) begin
+                $write(",                         SB  mem[%08h] = %h", core.alu_out, core.reg_data2[7:0]);
+            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+                $write(",                         SH  mem[%08h] = %h", core.alu_out, core.reg_data2[15:0]);
+            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+                $write(",                         SW  mem[%08h] = %08h", core.alu_out, core.reg_data2);
+            end
+        end else begin
+            $display("");
         end
     end
-end
-
-// Add instruction monitor
-always @(posedge clk) begin
-    if (!rst) begin
-        $display("Time %0t: PC=%08h, Instruction=%08h", 
-                 $time, 
-                 core.pc_out, 
-                 {core.i_mem.mem[core.pc_out+3], 
-                  core.i_mem.mem[core.pc_out+2], 
-                  core.i_mem.mem[core.pc_out+1], 
-                  core.i_mem.mem[core.pc_out]});
-    end
+    $display("");
 end
 
 core core(

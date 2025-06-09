@@ -46,14 +46,14 @@ pc pc(
 
 mem i_mem(
     .clk          (clk),
-    //read from memory
-    .adrs_rd      (pc_out),     // input    
-    .rd_data      (instruction),// output
-    //write to memory
-    .wr_en        (1'b0),       // input
-    .byt_en       (4'b0),       // input
-    .adrs_wr      (32'b0),       // input
-    .wr_data      (32'b0)       // input
+    .adrs_rd      (pc_out),
+    .rd_data      (instruction),
+    .wr_en        (1'b0),
+    .byt_en_wr    (4'b0),
+    .byt_en_rd    (4'b1111),
+    .sign_ext     (1'b0),
+    .adrs_wr      (32'b0),
+    .wr_data      (32'b0)
 );
 
 //decode stage
@@ -93,14 +93,14 @@ alu alu(
 //memory stage
 mem d_mem(
     .clk          (clk),
-    //read from memory
-    .adrs_rd      (alu_out),         // input    
-    .rd_data      (mem_rd_data),     // output
-    //write to memory
-    .wr_en        (ctrl.mem_wr_en),  // input
-    .byt_en       (ctrl.mem_byt_en), // input
-    .adrs_wr      (alu_out),         // input
-    .wr_data      (reg_data2)        // input
+    .adrs_rd      (alu_out),
+    .rd_data      (mem_rd_data),
+    .wr_en        (ctrl.mem_wr_en),
+    .byt_en_wr    (ctrl.mem_byt_en),
+    .byt_en_rd    (ctrl.mem_byt_en),
+    .sign_ext     (ctrl.sign_ext),
+    .adrs_wr      (alu_out),
+    .wr_data      (reg_data2)
 );
 
 assign wb_data = ctrl.sel_dmem_wb ? mem_rd_data : alu_out;

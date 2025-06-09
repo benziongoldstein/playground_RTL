@@ -3,13 +3,42 @@
 
 main:
     nop
-   # Test case 1: Basic OR (either bit 1)
-    addi x1, x0, 5      # x1 = 5 (binary: 0101)
-    addi x2, x0, 3      # x2 = 3 (binary: 0011)
-    or   x3, x1, x2     # x3 = x1 | x2 = 7 (binary: 0111)
-    
-    # Test case 2: OR with same number
-    addi x4, x0, 7      # x4 = 7 (binary: 0111)
-    addi x5, x0, 7      # x5 = 7 (binary: 0111)
-    or   x6, x4, x5     # x6 = x4 | x5 = 7 (binary: 0111)
+
+    # Test 1: Byte loads with -1
+    addi x3, x0, 0x100      # x3 = 0x100 (base address)
+    addi x2, x0, -1         # x2 = -1 (0xFFFFFFFF)
+    sb x2, 0(x3)            # mem[0x100] = 0xFF
+    lb x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
+    lbu x4, 0(x3)           # x4 should be 0x000000FF (unsigned)
     nop
+
+    # Test 2: Half-word loads with -1
+    addi x3, x0, 0x104      # x3 = 0x104 (new base address)
+    addi x2, x0, -1         # x2 = -1 (0xFFFFFFFF)
+    sh x2, 0(x3)            # mem[0x104] = 0xFFFF
+    lh x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
+    lhu x4, 0(x3)           # x4 should be 0x0000FFFF (unsigned)
+    nop
+
+    # Test 3: Byte loads with 0x80 (negative in signed, positive in unsigned)
+    addi x3, x0, 0x108      # x3 = 0x108 (new base address)
+    addi x2, x0, 0x80       # x2 = 0x80 (128 decimal)
+    sb x2, 0(x3)            # mem[0x108] = 0x80
+    lb x1, 0(x3)            # x1 should be 0xFFFFFF80 (signed)
+    lbu x4, 0(x3)           # x4 should be 0x00000080 (unsigned)
+    nop
+
+    # Test 4: Word loads with large value (0xFFFF)
+    addi x3, x0, 0x104      # x3 = 0x104 (new base address)
+    lui x2, 0x1             # x2 = 0x1000
+    addi x2, x2, -1         # x2 = 0x0FFF
+    addi x2, x2, 1          # x2 = 0x1000
+    addi x2, x2, -1         # x2 = 0x0FFF
+    lui x5, 0x1             # x5 = 0x1000
+    sub x2, x2, x5          # x2 = 0xFFFF
+    sh x2, 0(x3)            # mem[0x104] = 0xFFFF
+    lh x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
+    lhu x4, 0(x3)           # x4 should be 0x0000FFFF (unsigned)
+    nop
+    nop
+    ebreak

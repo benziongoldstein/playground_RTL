@@ -28,6 +28,7 @@ typedef struct packed {
     logic       reg_wr_en;
     logic       sel_alu_pc;
     logic       sel_alu_imm;
+    logic       sign_ext;
 
 } t_ctrl;
 

@@ -16,15 +16,10 @@ module pc(
     logic [31:0] next_pc;
 
     // Compute pc_plus4 = pc_out + 4 (instruction indexing)
-    always_comb begin
-        pc_plus4 = pc_out + 32'd4;
-    end
-
+    assign pc_plus4 = pc_out + 32'd4;
     // Mux to choose between pc_plus4 and alu_out
-    always_comb begin
-        next_pc = (sel_next_pc_alu_out) ? alu_out : pc_plus4;
-    end
-
+    assign next_pc = (sel_next_pc_alu_out) ? alu_out : pc_plus4;
+    
     // Register for pc_out with reset value
     `DFF_RST(pc_out, next_pc, clk, rst)  // or define RESET_VAL earlier if you prefer
 
