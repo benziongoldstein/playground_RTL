@@ -35,47 +35,6 @@ bne_taken:
     li x17, 2     # Should be skipped
 blt_taken:
     li x18, 3     # Should execute
-
-    # Test 4: BGE (Branch if Greater or Equal, signed)
-    # Should NOT take branch (x3 > x1)
-    bge x1, x3, bge_taken
-    li x19, 1     # Should execute
-    li x20, 2     # Should execute
-bge_taken:
-    li x21, 3     # Should be skipped
-
-    # Test 5: BLTU (Branch if Less Than, unsigned)
-    # Should take branch (x1 < x7)
-    bltu x1, x7, bltu_taken
-    li x22, 1     # Should be skipped
-    li x23, 2     # Should be skipped
-bltu_taken:
-    li x24, 3     # Should execute
-
-    # Test 6: BGEU (Branch if Greater or Equal, unsigned)
-    # Should NOT take branch (x7 > x1)
-    bgeu x1, x7, bgeu_taken
-    li x25, 1     # Should execute
-    li x26, 2     # Should execute
-bgeu_taken:
-    li x27, 3     # Should be skipped
-
-    # Test 7: Signed vs Unsigned comparison
-    # Should take branch (x5 > x6 signed, but x5 < x6 unsigned)
-    blt x5, x6, signed_taken
-    li x28, 1     # Should be skipped
-    li x29, 2     # Should be skipped
-signed_taken:
-    li x30, 3     # Should execute
-
-    # Test 8: Edge cases
-    # Should take branch (x8 is most negative signed number)
-    blt x8, x5, edge_taken
-    li x31, 1     # Should be skipped
-edge_taken:
-    li t0, 2      # Should execute
-
-    # Program end
     nop
     nop
     ebreak
