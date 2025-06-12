@@ -30,6 +30,7 @@ logic [31:0] reg_data1;
 logic [31:0] reg_data2;
 logic [31:0] alu_in1;
 logic [31:0] alu_in2;
+logic branch_cond_out;
 
 t_ctrl ctrl;
 
@@ -57,12 +58,13 @@ mem i_mem(
 
 //decode stage
 decoder decoder(
-    .instruction    (instruction),// input
-    .rs1            (rs1),        // output
-    .rs2            (rs2),        // output
-    .rd             (rd),         // output
-    .imm            (imm),        // output
-    .ctrl           (ctrl)        // output
+    .instruction     (instruction),     // input
+    .branch_cond_out (branch_cond_out), // input
+    .rs1             (rs1),             // output
+    .rs2             (rs2),             // output
+    .rd              (rd),              // output
+    .imm             (imm),             // output
+    .ctrl            (ctrl)             // output
 );
 
 assign reg_wr_data = ctrl.sel_wb ? wb_data : pc_plus4;
@@ -72,11 +74,17 @@ rf rf(
     .rs2        (rs2),              // input
     .rd         (rd),               // input
     .write_e    (ctrl.reg_wr_en),   // input
-    .write_d    (reg_wr_data),          // input
+    .write_d    (reg_wr_data),      // input
     .reg_data1  (reg_data1),        // output
     .reg_data2  (reg_data2)         // output
 );
 
+branch_cond branch_cond(
+    .reg_data1         (reg_data1),
+    .reg_data2         (reg_data2),
+    .branch_cond_op    (ctrl.branch_cond_op),
+    .branch_cond_out   (branch_cond_out)
+);
 
 
 assign alu_in1 = ctrl.sel_alu_pc  ? pc_out : reg_data1;

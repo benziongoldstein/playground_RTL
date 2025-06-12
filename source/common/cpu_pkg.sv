@@ -17,6 +17,14 @@ package cpu_pkg;
         ALU_AND  = 4'b0111  // Bitwise AND:     result = a & b
     } t_alu_op;
 
+typedef enum logic [3:0] {
+    BRANCH_COND_BEQ  = 4'b0000,
+    BRANCH_COND_BNE  = 4'b0001,
+    BRANCH_COND_BLT  = 4'b0100,
+    BRANCH_COND_BGE  = 4'b0101,
+    BRANCH_COND_BLTU = 4'b0110,
+    BRANCH_COND_BGEU = 4'b0111
+} t_branch_cond_op;
 
 typedef struct packed {
     t_alu_op    alu_op;
@@ -29,6 +37,7 @@ typedef struct packed {
     logic       sel_alu_pc;
     logic       sel_alu_imm;
     logic       sign_ext;
+    t_branch_cond_op branch_cond_op;
 
 } t_ctrl;
 

@@ -1,44 +1,81 @@
 .section .text
-.globl main
+.global main
 
 main:
-    nop
+    # Initialize test values
+    li x1, 5      # x1 = 5
+    li x2, 5      # x2 = 5 (equal to x1)
+    li x3, 6      # x3 = 6 (greater than x1)
+    li x4, 4      # x4 = 4 (less than x1)
+    li x5, -5     # x5 = -5 (negative)
+    li x6, -6     # x6 = -6 (more negative)
+    li x7, 0xFFFFFFFF  # x7 = -1 (unsigned: largest)
+    li x8, 0x80000000  # x8 = -2^31 (signed: most negative)
 
-    # Test 1: Byte loads with -1
-    addi x3, x0, 0x100      # x3 = 0x100 (base address)
-    addi x2, x0, -1         # x2 = -1 (0xFFFFFFFF)
-    sb x2, 0(x3)            # mem[0x100] = 0xFF
-    lb x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
-    lbu x4, 0(x3)           # x4 should be 0x000000FF (unsigned)
-    nop
+    # Test 1: BEQ (Branch if Equal)
+    # Should take branch (x1 == x2)
+    beq x1, x2, beq_taken
+    li x10, 1     # Should be skipped
+    li x11, 2     # Should be skipped
+beq_taken:
+    li x12, 3     # Should execute
 
-    # Test 2: Half-word loads with -1
-    addi x3, x0, 0x104      # x3 = 0x104 (new base address)
-    addi x2, x0, -1         # x2 = -1 (0xFFFFFFFF)
-    sh x2, 0(x3)            # mem[0x104] = 0xFFFF
-    lh x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
-    lhu x4, 0(x3)           # x4 should be 0x0000FFFF (unsigned)
-    nop
+    # Test 2: BNE (Branch if Not Equal)
+    # Should take branch (x1 != x3)
+    bne x1, x3, bne_taken
+    li x13, 1     # Should be skipped
+    li x14, 2     # Should be skipped
+bne_taken:
+    li x15, 3     # Should execute
 
-    # Test 3: Byte loads with 0x80 (negative in signed, positive in unsigned)
-    addi x3, x0, 0x108      # x3 = 0x108 (new base address)
-    addi x2, x0, 0x80       # x2 = 0x80 (128 decimal)
-    sb x2, 0(x3)            # mem[0x108] = 0x80
-    lb x1, 0(x3)            # x1 should be 0xFFFFFF80 (signed)
-    lbu x4, 0(x3)           # x4 should be 0x00000080 (unsigned)
-    nop
+    # Test 3: BLT (Branch if Less Than, signed)
+    # Should take branch (x4 < x1)
+    blt x4, x1, blt_taken
+    li x16, 1     # Should be skipped
+    li x17, 2     # Should be skipped
+blt_taken:
+    li x18, 3     # Should execute
 
-    # Test 4: Word loads with large value (0xFFFF)
-    addi x3, x0, 0x104      # x3 = 0x104 (new base address)
-    lui x2, 0x1             # x2 = 0x1000
-    addi x2, x2, -1         # x2 = 0x0FFF
-    addi x2, x2, 1          # x2 = 0x1000
-    addi x2, x2, -1         # x2 = 0x0FFF
-    lui x5, 0x1             # x5 = 0x1000
-    sub x2, x2, x5          # x2 = 0xFFFF
-    sh x2, 0(x3)            # mem[0x104] = 0xFFFF
-    lh x1, 0(x3)            # x1 should be 0xFFFFFFFF (signed)
-    lhu x4, 0(x3)           # x4 should be 0x0000FFFF (unsigned)
+    # Test 4: BGE (Branch if Greater or Equal, signed)
+    # Should NOT take branch (x3 > x1)
+    bge x1, x3, bge_taken
+    li x19, 1     # Should execute
+    li x20, 2     # Should execute
+bge_taken:
+    li x21, 3     # Should be skipped
+
+    # Test 5: BLTU (Branch if Less Than, unsigned)
+    # Should take branch (x1 < x7)
+    bltu x1, x7, bltu_taken
+    li x22, 1     # Should be skipped
+    li x23, 2     # Should be skipped
+bltu_taken:
+    li x24, 3     # Should execute
+
+    # Test 6: BGEU (Branch if Greater or Equal, unsigned)
+    # Should NOT take branch (x7 > x1)
+    bgeu x1, x7, bgeu_taken
+    li x25, 1     # Should execute
+    li x26, 2     # Should execute
+bgeu_taken:
+    li x27, 3     # Should be skipped
+
+    # Test 7: Signed vs Unsigned comparison
+    # Should take branch (x5 > x6 signed, but x5 < x6 unsigned)
+    blt x5, x6, signed_taken
+    li x28, 1     # Should be skipped
+    li x29, 2     # Should be skipped
+signed_taken:
+    li x30, 3     # Should execute
+
+    # Test 8: Edge cases
+    # Should take branch (x8 is most negative signed number)
+    blt x8, x5, edge_taken
+    li x31, 1     # Should be skipped
+edge_taken:
+    li t0, 2      # Should execute
+
+    # Program end
     nop
     nop
     ebreak
