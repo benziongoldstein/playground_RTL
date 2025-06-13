@@ -285,7 +285,8 @@ always @(posedge clk) begin
                 core.i_mem.mem[core.pc_out+1],
                 core.i_mem.mem[core.pc_out]});
                 
-        if (core.rf.write_e) begin
+        // Only show register writes when rd is not x0
+        if (core.rf.write_e && (core.rf.rd != 0)) begin
             $write(", Register x%0d = %08h", core.rf.rd, core.rf.write_d);
         end
         

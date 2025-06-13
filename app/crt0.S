@@ -6,6 +6,8 @@ _start:
     nop                 # Optional: NOP for alignment or debug
     nop                 # Optional: NOP for alignment or debug
     call main           # Call main (if you have a main function)
+    nop 
+    ebreak              
     j .                 # Infinite loop after main returns
 
 .section .bss
