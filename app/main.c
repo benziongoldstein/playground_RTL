@@ -2,7 +2,7 @@
  * Minimal RISC-V test program with only additions
  */
 int add(int a, int b) {
-    return a + b;
+    return a + c;
 }
 
 int main() {
