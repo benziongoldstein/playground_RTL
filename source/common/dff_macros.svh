@@ -36,7 +36,12 @@
         end \
     end
 
-
+// Macro for DFF with both reset and enable
+`define DFF_RST_EN(OUT, IN, CLK, EN, RST, RST_VAL) \
+    always_ff @(posedge CLK) begin \
+        if (RST) OUT <= RST_VAL; \
+        else if (EN) OUT <= IN; \
+    end
 
 
 `endif

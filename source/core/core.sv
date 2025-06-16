@@ -30,6 +30,7 @@ logic [31:0] reg_data1;
 logic [31:0] reg_data2;
 logic [31:0] alu_in1;
 logic [31:0] alu_in2;
+logic branch_cond_out;
 
 t_ctrl ctrl;
 
@@ -46,24 +47,24 @@ pc pc(
 
 mem i_mem(
     .clk          (clk),
-    //read from memory
-    .adrs_rd      (pc_out),     // input    
-    .rd_data      (instruction),// output
-    //write to memory
-    .wr_en        (1'b0),       // input
-    .byt_en       (4'b0),       // input
-    .adrs_wr      (32'b0),       // input
-    .wr_data      (32'b0)       // input
+    .adrs_rd      (pc_out),
+    .rd_data      (instruction),
+    .wr_en        (1'b0),
+    .byt_en       (4'b1111),
+    .sign_ext     (1'b0),
+    .adrs_wr      (32'b0),
+    .wr_data      (32'b0)
 );
 
 //decode stage
 decoder decoder(
-    .instruction    (instruction),// input
-    .rs1            (rs1),        // output
-    .rs2            (rs2),        // output
-    .rd             (rd),         // output
-    .imm            (imm),        // output
-    .ctrl           (ctrl)        // output
+    .instruction     (instruction),     // input
+    .branch_cond_out (branch_cond_out), // input
+    .rs1             (rs1),             // output
+    .rs2             (rs2),             // output
+    .rd              (rd),              // output
+    .imm             (imm),             // output
+    .ctrl            (ctrl)             // output
 );
 
 assign reg_wr_data = ctrl.sel_wb ? wb_data : pc_plus4;
@@ -73,11 +74,17 @@ rf rf(
     .rs2        (rs2),              // input
     .rd         (rd),               // input
     .write_e    (ctrl.reg_wr_en),   // input
-    .write_d    (reg_wr_data),          // input
+    .write_d    (reg_wr_data),      // input
     .reg_data1  (reg_data1),        // output
     .reg_data2  (reg_data2)         // output
 );
 
+branch_cond branch_cond(
+    .reg_data1         (reg_data1),
+    .reg_data2         (reg_data2),
+    .branch_cond_op    (ctrl.branch_cond_op),
+    .branch_cond_out   (branch_cond_out)
+);
 
 
 assign alu_in1 = ctrl.sel_alu_pc  ? pc_out : reg_data1;
@@ -93,14 +100,13 @@ alu alu(
 //memory stage
 mem d_mem(
     .clk          (clk),
-    //read from memory
-    .adrs_rd      (alu_out),         // input    
-    .rd_data      (mem_rd_data),     // output
-    //write to memory
-    .wr_en        (ctrl.mem_wr_en),  // input
-    .byt_en       (ctrl.mem_byt_en), // input
-    .adrs_wr      (alu_out),         // input
-    .wr_data      (reg_data2)        // input
+    .adrs_rd      (alu_out),
+    .rd_data      (mem_rd_data),
+    .wr_en        (ctrl.mem_wr_en),
+    .byt_en       (ctrl.mem_byt_en),
+    .sign_ext     (ctrl.sign_ext),
+    .adrs_wr      (alu_out),
+    .wr_data      (reg_data2)
 );
 
 assign wb_data = ctrl.sel_dmem_wb ? mem_rd_data : alu_out;

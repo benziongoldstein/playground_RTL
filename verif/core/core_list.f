@@ -11,6 +11,7 @@ source/mem/mem.sv
 source/pc/pc.sv
 source/rf/rf.sv
 source/alu/alu.sv
+source/branch_cond/branch_cond.sv
 
 //testbench
 verif/core/core_tb.sv
