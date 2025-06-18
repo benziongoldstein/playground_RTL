@@ -7,17 +7,37 @@ This repository is my personal RTL (Register Transfer Level) playground for expe
 
 ## Projects 
 
-### 1. Traffic Light Controller
+### 1. RISC-V CPU Core
+A complete 5-stage pipelined RISC-V CPU implementation featuring:
+- **5-Stage Pipeline**: IF (Instruction Fetch), ID (Instruction Decode), EX (Execute), MEM (Memory Access), WB (Write Back)
+- **Core Components**: Program Counter, Decoder, Register File, ALU, Memory, Branch Condition Unit
+- **RISC-V Support**: ALU operations (ADD, SUB, SLT, SLTU, SLL, SRL, SRA, XOR, OR, AND), Branch operations (BEQ, BNE, BLT, BGE, BLTU, BGEU), Load/Store with byte-enable and sign extension
+- **Test Applications**: C and assembly programs in the `app/` directory with RISC-V toolchain support
+
+#### Core Components:
+- **Program Counter (PC)**: Parameterized program counter module supporting synchronous operations and configurable bit width
+- **Register File (RF)**: Parameterized register file implementation with configurable width and depth, supporting synchronous write and asynchronous read operations
+- **Arithmetic Logic Unit (ALU)**: Parameterized ALU implementation supporting various arithmetic and logical operations, with configurable data width
+- **Decoder**: Instruction decode and control signal generation
+- **Memory**: Unified instruction/data memory with byte-enable and sign extension
+- **Branch Condition Unit**: Branch/jump condition evaluation
+
+### 2. Traffic Light Controller
 A parameterized traffic light controller implemented in SystemVerilog. This project demonstrates a simple finite state machine (FSM) for controlling traffic lights, including a testbench for simulation.
 
-### 2. Program Counter (PC)
-A parameterized program counter module for CPU design, supporting synchronous operations and configurable bit width.
+### 3. FIFO (First-In-First-Out) 8-bit
+A parameterized 8-bit FIFO buffer implementation with:
+- 8-location circular buffer with 1-bit data width
+- Push/pop operations with full/empty status indicators
+- Write and read pointer management
+- Macro-based D flip-flop instantiation
 
-### 3. Register File (RF)
-A parameterized register file implementation with configurable width and depth, supporting synchronous write and asynchronous read operations.
-
-### 4. Arithmetic Logic Unit (ALU)
-A parameterized ALU implementation supporting various arithmetic and logical operations, with configurable data width.
+### 4. LIFO (Last-In-First-Out) 8-bit
+A parameterized 8-bit LIFO stack implementation with:
+- 8-location stack with 1-bit data width
+- Push/pop operations with full/empty status indicators
+- Stack pointer management for LIFO behavior
+- Macro-based D flip-flop instantiation
 
 ### 5. Common Components
 A collection of reusable digital design components including:
@@ -29,18 +49,19 @@ A collection of reusable digital design components including:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/benziongoldstein/verilog_projects.git
-   cd verilog_projects
+   git clone https://github.com/benziongoldstein/playground_RTL.git
+   cd playground_RTL
    ```
 2. **Install dependencies:**
    - [Icarus Verilog](http://iverilog.icarus.com/) (for simulation)
    - [GTKWave](http://gtkwave.sourceforge.net/) (for waveform viewing)
+   - RISC-V GCC toolchain (for compiling C programs in the `app/` directory)
 
 3. **Build and simulate using the builder script (recommended):**
    ```bash
    python3 build/builder.py <project_name> -all
    ```
-   Replace `<project_name>` with any of the project names (e.g., `traffic_light`, `pc`, `rf`, `alu`).
+   Replace `<project_name>` with any of the project names (e.g., `core`, `traffic_light`, `pc`, `rf`, `alu`).
    - This will compile, simulate, and open GTKWave for the selected project.
    - You can also use `-hw` (compile only), `-sim` (simulate), or `-gui` (view waveforms) as needed.
 
@@ -52,7 +73,27 @@ A collection of reusable digital design components including:
    ```
    - Each project has its own file list in `verif/<project_name>/<project_name>_list.f` containing the required source and testbench files.
 
+5. **Compile RISC-V applications:**
+   ```bash
+   cd app/
+   make
+   ```
+
 #### Project-Specific Features
+
+##### RISC-V CPU Core
+- Complete 5-stage pipeline implementation
+- Unified instruction and data memory
+- Branch condition evaluation unit
+- Support for RISC-V instruction set operations
+- Test applications with C and assembly code
+- Comprehensive core testbench with instruction memory
+
+**Core Components Features:**
+- **Program Counter (PC)**: Parameterized bit width, synchronous operations, optional enable and reset functionality
+- **Register File (RF)**: Configurable data width and number of registers, synchronous write with write enable, asynchronous read, dual-port read capability
+- **ALU**: Parameterized data width, multiple arithmetic operations (ADD, SUB, etc.), logical operations (AND, OR, XOR, etc.), status flags (Zero, Carry, Overflow)
+- **All components**: Individual testbenches with various test scenarios
 
 ##### Traffic Light Controller
 - Parameterized state durations for RED, RED+YELLOW, GREEN, and YELLOW
@@ -60,25 +101,19 @@ A collection of reusable digital design components including:
 - Macro-based D flip-flop instantiation
 - Comprehensive testbench for simulation
 
-##### Program Counter (PC)
-- Parameterized bit width
-- Synchronous operations
-- Optional enable and reset functionality
-- Testbench with various test scenarios
+##### FIFO 8-bit
+- 8-location circular buffer with 1-bit data elements
+- Push/pop operations with enable controls
+- Full and empty status indicators
+- Write and read pointer management
+- Uses DFF macros for sequential logic
 
-##### Register File (RF)
-- Configurable data width and number of registers
-- Synchronous write with write enable
-- Asynchronous read
-- Dual-port read capability
-- Testbench with read/write verification
-
-##### ALU
-- Parameterized data width
-- Multiple arithmetic operations (ADD, SUB, etc.)
-- Logical operations (AND, OR, XOR, etc.)
-- Status flags (Zero, Carry, Overflow)
-- Comprehensive testbench
+##### LIFO 8-bit
+- 8-location stack with 1-bit data elements
+- Push/pop operations following LIFO behavior
+- Stack pointer for top-of-stack tracking
+- Full and empty status indicators
+- Uses DFF macros for sequential logic
 
 #### Contributing
 
