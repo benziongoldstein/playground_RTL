@@ -8,8 +8,8 @@ This repository is my personal RTL (Register Transfer Level) playground for expe
 ## Projects 
 
 ### 1. RISC-V CPU Core
-A complete 5-stage pipelined RISC-V CPU implementation featuring:
-- **5-Stage Pipeline**: IF (Instruction Fetch), ID (Instruction Decode), EX (Execute), MEM (Memory Access), WB (Write Back)
+A complete 5-stage Single Cycle RISC-V CPU implementation featuring:
+- **5-Stage Single Cycle**: IF (Instruction Fetch), ID (Instruction Decode), EX (Execute), MEM (Memory Access), WB (Write Back)
 - **Core Components**: Program Counter, Decoder, Register File, ALU, Memory, Branch Condition Unit
 - **RISC-V Support**: ALU operations (ADD, SUB, SLT, SLTU, SLL, SRL, SRA, XOR, OR, AND), Branch operations (BEQ, BNE, BLT, BGE, BLTU, BGEU), Load/Store with byte-enable and sign extension
 - **Test Applications**: C and assembly programs in the `app/` directory with RISC-V toolchain support
