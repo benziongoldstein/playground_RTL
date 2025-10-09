@@ -6,7 +6,8 @@ module fifo_8bit (
     input  logic data_in,      // 1-bit data input
     output logic data_out,     // 1-bit data output
     output logic full,         // FIFO full indicator
-    output logic empty         // FIFO empty indicator
+    output logic empty,        // FIFO empty indicator
+    output logic valid         // Data output valid indicator
 );
 
     // Internal registers
@@ -46,6 +47,7 @@ module fifo_8bit (
 
     // Output logic
     assign data_out = fifo_mem[read_ptr];
+    assign valid = pop_en;  // Valid only when we successfully pop (pop && !empty)
 
     // Sequential logic using DFF macros
     `DFF_RST_EN(write_ptr, write_ptr + 1'b1, clk, push_en, rst_n, 3'b000)  // Only increments on push
