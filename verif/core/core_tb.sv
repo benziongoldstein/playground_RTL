@@ -26,6 +26,7 @@ logic [3:0] mem_be_history [MAX_INSTRUCTIONS];
 logic sign_ext_history [MAX_INSTRUCTIONS];
 logic rf_wr_history [MAX_INSTRUCTIONS];
 int inst_count = 0;
+logic stop_collecting = 0;  // Flag to stop collecting after EBREAK
 
 // assign clock and reset
 initial begin
@@ -78,6 +79,7 @@ end
 //check if ebreak is hit and display summary table
 always @(posedge clk) begin
     if (core.instruction == 32'h00100073) begin  // EBREAK
+        stop_collecting = 1;  // Stop collecting new instructions
         $display("EBREAK hit at time %0t", $time);
         display_summary_table();
         $finish;
@@ -248,12 +250,12 @@ endfunction
 // Function to display summary table
 function void display_summary_table;
     $display("\n\nInstruction Execution Summary:");
-    $display("┌──────────┬──────────┬──────────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐");
-    $display("│ PC       │ Inst     │ Name     │PC+4 │PC+im│PC+rs│ALUPC│ALUim│ALUr2│ALUop│MEMrd│MEMwr│MEMbe│SIGN │RFwrt│");
-    $display("├──────────┼──────────┼──────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤");
+    $display("┌──────────┬──────────┬──────────┬─────┬─────┬─────┬─────┬─────┬─────┬──────┬─────┬─────┬──────┬─────┬─────┐");
+    $display("│ PC       │ Inst     │ Name     │PC+4 │PC+im│PC+rs│ALUPC│ALUim│ALUr2│ALUop │MEMrd│MEMwr│MEMbe │SIGN │RFwrt│");
+    $display("├──────────┼──────────┼──────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────┼─────┼──────┼─────┼─────┤");
     
     for (int i = 0; i < inst_count; i++) begin
-        $display("│ %08h │ %08h │ %-8s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %04b │ %-3s │ %-3s │ %04b │ %-3s │ %-3s │",
+        $display("│ %08h │ %08h │ %-8s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-4s │ %-3s │ %-3s │ %-4s │ %-3s │ %-3s │",
                  pc_history[i],
                  inst_history[i],
                  inst_names[i],
@@ -263,20 +265,20 @@ function void display_summary_table;
                  alu_pc_history[i] ? "1" : "0",
                  alu_im_history[i] ? "1" : "0",
                  alu_rs2_history[i] ? "1" : "0",
-                 alu_op_history[i],
+                 $sformatf("%04b", alu_op_history[i]),
                  mem_rd_history[i] ? "1" : "0",
                  mem_wr_history[i] ? "1" : "0",
-                 mem_be_history[i],
+                 $sformatf("%04b", mem_be_history[i]),
                  sign_ext_history[i] ? "1" : "0",
                  rf_wr_history[i] ? "1" : "0");
     end
     
-    $display("└──────────┴──────────┴──────────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘");
+    $display("└──────────┴──────────┴──────────┴─────┴─────┴─────┴─────┴─────┴─────┴──────┴─────┴─────┴──────┴─────┴─────┘");
 endfunction
 
 // Monitor for instruction fetch and register file changes
 always @(posedge clk) begin
-    if (!rst) begin
+    if (!rst && !stop_collecting && (core.instruction != 32'h00100073)) begin  // Don't collect EBREAK
         $write("Time %0t: PC=%08h, Instruction=%08h", 
                $time, 
                core.pc_out,
