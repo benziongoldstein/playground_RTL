@@ -9,7 +9,7 @@
 
 
 `define DFF_RST(Q, D, CLK, RST) \
-    always_ff @(posedge CLK or posedge RST) begin \
+    always_ff @(posedge CLK) begin \
         if (RST) Q <= '0; \
         else     Q <= D; \
     end
@@ -17,7 +17,7 @@
 
 
 `define DFF_RST_VAL(Q, D, CLK, RST, RESET_VAL) \
-    always_ff @(posedge CLK or posedge RST) begin \
+    always_ff @(posedge CLK) begin \
         if (RST) Q <= RESET_VAL; \
         else     Q <= D; \
     end
@@ -28,11 +28,13 @@
         if (en) q <= in; \
     end
 
-// Macro for memory array DFF
-`define DFF_MEM(MEM, NEXT_MEM, CLK) \
+// Macro for memory array DFF with enable
+`define DFF_MEM(MEM, NEXT_MEM, CLK, EN) \
     always_ff @(posedge CLK) begin \
-        for (int i = 0; i < $size(MEM); i++) begin \
-            MEM[i] <= NEXT_MEM[i]; \
+        if (EN) begin \
+            for (int i = 0; i < $size(MEM); i++) begin \
+                MEM[i] <= NEXT_MEM[i]; \
+            end \
         end \
     end
 

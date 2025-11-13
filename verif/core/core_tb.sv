@@ -1,4 +1,5 @@
 module core_tb;
+import cpu_pkg::*;
 
 //clock and reset
 logic clk;
@@ -26,6 +27,14 @@ logic [3:0] mem_be_history [MAX_INSTRUCTIONS];
 logic sign_ext_history [MAX_INSTRUCTIONS];
 logic rf_wr_history [MAX_INSTRUCTIONS];
 int inst_count = 0;
+logic stop_collecting = 0;  // Flag to stop collecting after EBREAK
+
+// Registers to store previous PC, instruction, and control signals (captured before clock edge)
+logic [31:0] prev_pc;
+logic [31:0] prev_instruction;
+logic prev_reg_wr_en;
+logic [4:0] prev_rd;
+t_ctrl prev_ctrl;  // Store previous control signals
 
 // assign clock and reset
 initial begin
@@ -75,9 +84,22 @@ initial begin
     @(posedge clk);
 end
 
+// Capture PC, instruction, and control signals on negedge (they're stable and represent what will execute)
+// On the next posedge, these will be the "previous" values (the ones that just executed)
+always @(negedge clk) begin
+    if (!rst) begin
+        prev_pc = core.pc_out;
+        prev_instruction = core.instruction;
+        prev_reg_wr_en = core.ctrl.reg_wr_en;
+        prev_rd = core.rf.rd;
+        prev_ctrl = core.ctrl;  // Store all control signals
+    end
+end
+
 //check if ebreak is hit and display summary table
 always @(posedge clk) begin
     if (core.instruction == 32'h00100073) begin  // EBREAK
+        stop_collecting = 1;  // Stop collecting new instructions
         $display("EBREAK hit at time %0t", $time);
         display_summary_table();
         $finish;
@@ -222,24 +244,28 @@ function string get_instruction_name(input logic [31:0] instruction);
     endcase
 endfunction
 
-// Function to collect instruction info
+// Function to collect instruction info (uses previous values captured before clock edge)
 function void collect_inst_info;
     if (inst_count < MAX_INSTRUCTIONS) begin
-        pc_history[inst_count] = core.pc_out;
-        inst_history[inst_count] = core.instruction;
-        inst_names[inst_count] = get_instruction_name(core.instruction);
-        pc_plus4_history[inst_count] = !core.ctrl.sel_next_pc_alu_out;  // PC+4 is selected when sel_next_pc_alu_out is 0
-        pc_im_history[inst_count] = core.ctrl.sel_next_pc_alu_out;
-        pc_rs_history[inst_count] = (!core.ctrl.sel_next_pc_alu_out && core.ctrl.sel_wb);
-        alu_pc_history[inst_count] = core.ctrl.sel_alu_pc;
-        alu_im_history[inst_count] = core.ctrl.sel_alu_imm;
-        alu_rs2_history[inst_count] = !core.ctrl.sel_alu_imm;
-        alu_op_history[inst_count] = core.ctrl.alu_op;
-        mem_rd_history[inst_count] = core.ctrl.sel_dmem_wb;
-        mem_wr_history[inst_count] = core.ctrl.mem_wr_en;
-        mem_be_history[inst_count] = core.ctrl.mem_byt_en;
-        sign_ext_history[inst_count] = core.ctrl.sign_ext;
-        rf_wr_history[inst_count] = core.ctrl.reg_wr_en;
+        // Use previous PC and instruction (the ones that just executed)
+        pc_history[inst_count] = prev_pc;
+        inst_history[inst_count] = prev_instruction;
+        inst_names[inst_count] = get_instruction_name(prev_instruction);
+        
+        // Use stored previous control signals (from the instruction that just executed)
+        pc_plus4_history[inst_count] = !prev_ctrl.sel_next_pc_alu_out;  // PC+4 is selected when sel_next_pc_alu_out is 0
+        pc_im_history[inst_count] = prev_ctrl.sel_next_pc_alu_out;
+        // Fix: PC+rs should only be 1 for branch/jump instructions, not based on sel_wb
+        pc_rs_history[inst_count] = 1'b0;  // PC+rs is only for branches/jumps, which use sel_next_pc_alu_out
+        alu_pc_history[inst_count] = prev_ctrl.sel_alu_pc;
+        alu_im_history[inst_count] = prev_ctrl.sel_alu_imm;
+        alu_rs2_history[inst_count] = !prev_ctrl.sel_alu_imm;
+        alu_op_history[inst_count] = prev_ctrl.alu_op;
+        mem_rd_history[inst_count] = prev_ctrl.sel_dmem_wb;
+        mem_wr_history[inst_count] = prev_ctrl.mem_wr_en;
+        mem_be_history[inst_count] = prev_ctrl.mem_byt_en;
+        sign_ext_history[inst_count] = prev_ctrl.sign_ext;
+        rf_wr_history[inst_count] = prev_reg_wr_en;  // Use previous reg_wr_en
         
         inst_count++;
     end
@@ -248,12 +274,12 @@ endfunction
 // Function to display summary table
 function void display_summary_table;
     $display("\n\nInstruction Execution Summary:");
-    $display("┌──────────┬──────────┬──────────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐");
-    $display("│ PC       │ Inst     │ Name     │PC+4 │PC+im│PC+rs│ALUPC│ALUim│ALUr2│ALUop│MEMrd│MEMwr│MEMbe│SIGN │RFwrt│");
-    $display("├──────────┼──────────┼──────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤");
+    $display("┌──────────┬──────────┬──────────┬─────┬─────┬─────┬─────┬─────┬─────┬──────┬─────┬─────┬──────┬─────┬─────┐");
+    $display("│ PC       │ Inst     │ Name     │PC+4 │PC+im│PC+rs│ALUPC│ALUim│ALUr2│ALUop │MEMrd│MEMwr│MEMbe │SIGN │RFwrt│");
+    $display("├──────────┼──────────┼──────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────┼─────┼──────┼─────┼─────┤");
     
     for (int i = 0; i < inst_count; i++) begin
-        $display("│ %08h │ %08h │ %-8s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %04b │ %-3s │ %-3s │ %04b │ %-3s │ %-3s │",
+        $display("│ %08h │ %08h │ %-8s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-3s │ %-4s │ %-3s │ %-3s │ %-4s │ %-3s │ %-3s │",
                  pc_history[i],
                  inst_history[i],
                  inst_names[i],
@@ -263,63 +289,66 @@ function void display_summary_table;
                  alu_pc_history[i] ? "1" : "0",
                  alu_im_history[i] ? "1" : "0",
                  alu_rs2_history[i] ? "1" : "0",
-                 alu_op_history[i],
+                 $sformatf("%04b", alu_op_history[i]),
                  mem_rd_history[i] ? "1" : "0",
                  mem_wr_history[i] ? "1" : "0",
-                 mem_be_history[i],
+                 $sformatf("%04b", mem_be_history[i]),
                  sign_ext_history[i] ? "1" : "0",
                  rf_wr_history[i] ? "1" : "0");
     end
     
-    $display("└──────────┴──────────┴──────────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘");
+    $display("└──────────┴──────────┴──────────┴─────┴─────┴─────┴─────┴─────┴─────┴──────┴─────┴─────┴──────┴─────┴─────┘");
 endfunction
 
 // Monitor for instruction fetch and register file changes
-always @(posedge clk) begin
-    if (!rst) begin
+// Use negedge to capture values after they've settled from previous instruction
+always @(negedge clk) begin
+    if (!rst && !stop_collecting && (prev_instruction != 32'h00100073)) begin  // Don't collect EBREAK
         $write("Time %0t: PC=%08h, Instruction=%08h", 
                $time, 
-               core.pc_out,
-               {core.i_mem.mem[core.pc_out+3],
-                core.i_mem.mem[core.pc_out+2],
-                core.i_mem.mem[core.pc_out+1],
-                core.i_mem.mem[core.pc_out]});
+               prev_pc,
+               prev_instruction);
                 
         // Only show register writes when rd is not x0
-        if (core.rf.write_e && (core.rf.rd != 0)) begin
-            $write(", Register x%0d = %08h", core.rf.rd, core.rf.write_d);
+        if (prev_reg_wr_en && (prev_rd != 0)) begin
+            $write(", Register x%0d = %08h", prev_rd, core.rf.write_d);
         end
         
-        if(core.instruction[6:0] == 7'b0000011) begin
-            if((core.ctrl.mem_byt_en == 4'b0001) && (core.ctrl.sign_ext == 1'b1)) begin
+        if(prev_instruction[6:0] == 7'b0000011) begin
+            if((prev_ctrl.mem_byt_en == 4'b0001) && (prev_ctrl.sign_ext == 1'b1)) begin
                 $write(", LB  mem[%08h]", core.alu_out);
-            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b0011) begin
                 $write(", LH  mem[%08h]", core.alu_out);
-            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b1111) begin
                 $write(", LW  mem[%08h]", core.alu_out);
             end
-            else if((core.ctrl.mem_byt_en == 4'b0001) && (core.ctrl.sign_ext == 1'b0)) begin
+            else if((prev_ctrl.mem_byt_en == 4'b0001) && (prev_ctrl.sign_ext == 1'b0)) begin
                 $write(", LBU mem[%08h]", core.alu_out);
-            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b0011) begin
                 $write(", LHU mem[%08h]", core.alu_out);
-            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b1111) begin
                 $write(", LW  mem[%08h]", core.alu_out);
             end
         end
         
-        if(core.ctrl.mem_wr_en) begin
-            if(core.ctrl.mem_byt_en == 4'b0001) begin
+        if(prev_ctrl.mem_wr_en) begin
+            if(prev_ctrl.mem_byt_en == 4'b0001) begin
                 $write(", SB  mem[%08h] = %h", core.alu_out, core.reg_data2[7:0]);
-            end else if(core.ctrl.mem_byt_en == 4'b0011) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b0011) begin
                 $write(", SH  mem[%08h] = %h", core.alu_out, core.reg_data2[15:0]);
-            end else if(core.ctrl.mem_byt_en == 4'b1111) begin
+            end else if(prev_ctrl.mem_byt_en == 4'b1111) begin
                 $write(", SW  mem[%08h] = %08h", core.alu_out, core.reg_data2);
             end
         end
         
         $display("");
-        
-        // Collect instruction info
+    end
+end
+
+// Collect instruction info on posedge (after values have been captured on negedge)
+always @(posedge clk) begin
+    if (!rst && !stop_collecting && (prev_instruction != 32'h00100073)) begin  // Don't collect EBREAK
+        // Collect instruction info using previous values
         collect_inst_info();
     end
 end
