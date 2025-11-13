@@ -60,8 +60,8 @@ end
 // -----------------------
 // Memory Clocked Update
 // -----------------------
-// Use macro to update memory array on clock edge
-`DFF_MEM(mem, next_mem, clk)
+// Use macro to update memory array on clock edge only when writing (power saving)
+`DFF_MEM(mem, next_mem, clk, wr_en)
 
 endmodule
 

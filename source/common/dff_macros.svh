@@ -28,11 +28,13 @@
         if (en) q <= in; \
     end
 
-// Macro for memory array DFF
-`define DFF_MEM(MEM, NEXT_MEM, CLK) \
+// Macro for memory array DFF with enable
+`define DFF_MEM(MEM, NEXT_MEM, CLK, EN) \
     always_ff @(posedge CLK) begin \
-        for (int i = 0; i < $size(MEM); i++) begin \
-            MEM[i] <= NEXT_MEM[i]; \
+        if (EN) begin \
+            for (int i = 0; i < $size(MEM); i++) begin \
+                MEM[i] <= NEXT_MEM[i]; \
+            end \
         end \
     end
 
