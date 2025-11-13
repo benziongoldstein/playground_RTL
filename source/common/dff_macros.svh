@@ -9,7 +9,7 @@
 
 
 `define DFF_RST(Q, D, CLK, RST) \
-    always_ff @(posedge CLK or posedge RST) begin \
+    always_ff @(posedge CLK) begin \
         if (RST) Q <= '0; \
         else     Q <= D; \
     end
@@ -17,7 +17,7 @@
 
 
 `define DFF_RST_VAL(Q, D, CLK, RST, RESET_VAL) \
-    always_ff @(posedge CLK or posedge RST) begin \
+    always_ff @(posedge CLK) begin \
         if (RST) Q <= RESET_VAL; \
         else     Q <= D; \
     end
