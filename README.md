@@ -125,7 +125,7 @@ This project is open source and free to use for any purpose. Feel free to modify
 
 #### Contact Information
 
-For questions or support, please contact the maintainer at benziong@mail.tau.ac.il.
+For questions or support, please contact the maintainer at benziong@mail.tau.ac.il or benzion2001@gmail.com.
 
 ---
 
